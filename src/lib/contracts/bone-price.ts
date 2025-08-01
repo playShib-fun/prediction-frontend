@@ -1,5 +1,5 @@
 import { createPublicClient, http } from "viem";
-import { shibarium, type Chain } from "wagmi/chains";
+import { type Chain } from "wagmi/chains";
 import bonePriceAbi from "@/abis/bone-price.json";
 
 // Contract address

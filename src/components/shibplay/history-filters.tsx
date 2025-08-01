@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -88,26 +88,8 @@ const filterOptions: {
 export default function HistoryFilters({
   activeFilter,
   onFilterChange,
-  stats,
 }: HistoryFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const getFilterCount = (filter: FilterType) => {
-    switch (filter) {
-      case "all":
-        return stats.total;
-      case "winners":
-        return stats.winners;
-      case "losers":
-        return stats.losers;
-      case "calculating":
-        return stats.calculating;
-      case "running":
-        return stats.running;
-      default:
-        return 0;
-    }
-  };
 
   const activeOption = filterOptions.find(
     (option) => option.value === activeFilter
@@ -140,7 +122,6 @@ export default function HistoryFilters({
               {/* Filter Options */}
               <div className="space-y-3">
                 {filterOptions.map((option) => {
-                  const count = getFilterCount(option.value);
                   const isActive = activeFilter === option.value;
 
                   return (

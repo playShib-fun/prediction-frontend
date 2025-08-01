@@ -7,8 +7,6 @@ import type {
   Claim,
   BetBull,
   BetBear,
-  QueryResponse,
-  SingleQueryResponse,
 } from "./graphql-client";
 
 // GraphQL Queries

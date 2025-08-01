@@ -1,6 +1,6 @@
 "use client";
 
-import { Gamepad, Gamepad2, Loader } from "lucide-react";
+import { Gamepad, Loader } from "lucide-react";
 import {
   DynamicIsland,
   DynamicContainer,
@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 
 export default function Header() {
-  const { state, setState } = useStateStore((state) => state);
+  const { state } = useStateStore((state) => state);
   const { setSize } = useDynamicIslandSize();
 
   // Move setSize calls to useEffect to avoid setState during render

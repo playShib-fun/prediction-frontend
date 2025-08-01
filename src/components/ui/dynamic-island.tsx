@@ -11,7 +11,6 @@ import React, {
   useState,
 } from "react";
 import { AnimatePresence, motion, useWillChange } from "motion/react";
-import { cn } from "@/lib/utils";
 
 const stiffness = 400;
 const damping = 30;
@@ -360,9 +359,9 @@ const DynamicIslandContent = ({
 }: {
   children: React.ReactNode;
   id: string;
-  willChange: any;
+  willChange: ReturnType<typeof useWillChange>;
   screenSize: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => {
   const { state, presets } = useDynamicIslandSize();
   const currentSize = presets[state.size];
@@ -411,18 +410,6 @@ const DynamicContainer = ({ className, children }: DynamicContainerProps) => {
     opacity: size === previousSize ? 1 : 0,
     scale: size === previousSize ? 1 : 0.9,
     y: size === previousSize ? 0 : 5,
-  };
-
-  const animateState = {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness,
-      damping,
-      duration: isSizeChanged ? 0.5 : 0.8,
-    },
   };
 
   return (

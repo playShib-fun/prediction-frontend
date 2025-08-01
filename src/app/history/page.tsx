@@ -8,19 +8,15 @@ import {
   useEndRounds,
   useLockRounds,
   useRewardsCalculated,
-  useStartRounds,
 } from "@/hooks/use-prediction-data";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { useFormattedPriceByRoundId } from "@/hooks/use-bone-price";
 import { useEffect, useMemo, useState } from "react";
 import Loading from "@/components/shibplay/loading";
 import HistoryCard from "@/components/shibplay/history-card";
 import HistoryFilters, {
   FilterType,
 } from "@/components/shibplay/history-filters";
-import { useReadContract } from "wagmi";
-import { predictionConfig } from "@/lib/contracts/prediction";
 
 export default function History() {
   const { address } = useWalletConnection();
@@ -106,9 +102,6 @@ export default function History() {
       };
     });
   }, [allBets, claims]);
-
-  // No need to filter here anymore - HistoryCard will handle filtering
-  const filteredBets = betsWithStats;
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -211,7 +204,9 @@ export default function History() {
             <h3 className="text-xl font-semibold text-gray-300 mb-2">
               No bets found
             </h3>
-            <p className="text-gray-500">You haven't placed any bets yet.</p>
+            <p className="text-gray-500">
+              You haven&apos;t placed any bets yet.
+            </p>
           </div>
         ) : (
           betsWithStats.map((bet, index) => (

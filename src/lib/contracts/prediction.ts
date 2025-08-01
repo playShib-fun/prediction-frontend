@@ -1,5 +1,5 @@
-import { createPublicClient, http } from "viem";
-import { shibarium, type Chain } from "wagmi/chains";
+import { createPublicClient, http, type PublicClient } from "viem";
+import { type Chain } from "wagmi/chains";
 import predictionAbi from "@/abis/prediction.json";
 
 // Contract address
@@ -101,22 +101,22 @@ export const predictionUtils = {
   /**
    * Get current epoch
    */
-  getCurrentEpoch: async (client: any) => {
-    return await client.readContract({
+  getCurrentEpoch: async (client: PublicClient) => {
+    return (await client.readContract({
       ...predictionConfig,
       functionName: "currentEpoch",
-    });
+    })) as bigint;
   },
 
   /**
    * Get round data by epoch
    */
-  getRound: async (client: any, epoch: bigint) => {
-    return await client.readContract({
+  getRound: async (client: PublicClient, epoch: bigint) => {
+    return (await client.readContract({
       ...predictionConfig,
       functionName: "rounds",
       args: [epoch],
-    });
+    })) as Round;
   },
 
   /**
@@ -516,7 +516,7 @@ export const predictionUtils = {
   getFormattedLedger: async (client: any, epoch: bigint, user: string) => {
     const ledger = await predictionUtils.getLedger(client, epoch, user);
     return {
-      position: ledger[0] === 0n ? Position.Bull : Position.Bear,
+      position: ledger[0] === BigInt(0) ? Position.Bull : Position.Bear,
       amount: formatAmount(ledger[1]),
       claimed: ledger[2],
       rawData: ledger,
@@ -541,7 +541,7 @@ export const predictionUtils = {
     return {
       epochs: result[0].map(formatEpoch),
       betInfos: result[1].map((bet) => ({
-        position: bet[0] === 0n ? Position.Bull : Position.Bear,
+        position: bet[0] === BigInt(0) ? Position.Bull : Position.Bear,
         amount: formatAmount(bet[1]),
         claimed: bet[2],
       })),
@@ -611,7 +611,7 @@ export const predictionUtils = {
 
     for (let i = 0; i < maxEpochs; i++) {
       const epoch = currentEpoch - BigInt(i);
-      if (epoch <= 0n) break;
+      if (epoch <= BigInt(0)) break;
 
       const isClaimable = await predictionUtils.getClaimable(
         client,

@@ -8,8 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ChartArea, X } from "lucide-react";
+import { ChartArea } from "lucide-react";
 import TradingViewWidget from "./trading-view-widget";
 import { motion, AnimatePresence } from "motion/react";
 

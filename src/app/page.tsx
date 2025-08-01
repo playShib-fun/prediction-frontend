@@ -1,15 +1,13 @@
 "use client";
 
 import GameCard from "@/components/shibplay/game-card";
-import { Tutorial } from "@/components/shibplay/tutorial";
 import {
   Carousel,
   CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { Fragment, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   useEndRounds,
   useLockRounds,

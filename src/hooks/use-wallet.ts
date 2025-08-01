@@ -6,7 +6,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { shibarium } from "wagmi/chains";
 
@@ -103,7 +103,10 @@ export const useTokenBalances = (
   const targetAddress = address || connectedAddress;
 
   return useQuery({
-    queryKey: walletQueryKeys.balances(targetAddress || ""),
+    queryKey: [
+      ...walletQueryKeys.balances(targetAddress || ""),
+      tokenAddresses,
+    ],
     queryFn: async () => {
       if (!targetAddress) return [];
 
@@ -177,9 +180,10 @@ export const useHasSufficientBalance = (
 ) => {
   const { address } = useAccount();
 
-  const balanceQuery = tokenAddress
-    ? useBoneBalance(address) // For specific token
-    : useNativeBalance(address); // For native token
+  const boneBalanceQuery = useBoneBalance(address);
+  const nativeBalanceQuery = useNativeBalance(address);
+
+  const balanceQuery = tokenAddress ? boneBalanceQuery : nativeBalanceQuery;
 
   const hasSufficientBalance = balanceQuery.data?.value
     ? balanceQuery.data.value >= requiredAmount
@@ -381,7 +385,7 @@ export const useGasEstimate = (transaction?: {
   data?: string;
 }) => {
   return useQuery({
-    queryKey: walletQueryKeys.gasEstimate(),
+    queryKey: [...walletQueryKeys.gasEstimate(), transaction],
     queryFn: async () => {
       if (!transaction) return null;
 

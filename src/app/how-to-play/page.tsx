@@ -28,9 +28,6 @@ import {
   Users,
   BarChart3,
   HelpCircle,
-  CheckCircle,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 import Link from "next/link";
 

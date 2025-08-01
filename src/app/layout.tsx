@@ -2,13 +2,10 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans"; // import font
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { WarpBackground } from "@/components/magicui/warp-background";
 import Header from "@/components/shibplay/header";
 import Footer from "@/components/shibplay/footer";
-import FullParticles from "@/components/shibplay/full-particles";
 import Providers from "./providers";
 import { headers } from "next/headers";
-import { Tutorial } from "@/components/shibplay/tutorial";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
@@ -43,7 +40,7 @@ export default async function RootLayout({
               {children}
               <Footer />
             </section>
-            <Tutorial />
+            {/* <Tutorial /> */}
             <Toaster />
           </Providers>
         </ThemeProvider>

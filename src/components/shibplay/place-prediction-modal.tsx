@@ -14,17 +14,8 @@ import { TextAnimate } from "../magicui/text-animate";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { useNativeBalance, useWalletConnection } from "@/hooks/use-wallet";
-import {
-  createPredictionClient,
-  predictionConfig,
-} from "@/lib/contracts/prediction";
-import { shibarium } from "wagmi/chains";
-import { predictionUtils } from "@/lib/contracts/prediction";
-import {
-  useChainId,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from "wagmi";
+import { predictionConfig } from "@/lib/contracts/prediction";
+import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { toast } from "sonner";
 
 interface PlacePredictionModalProps {
@@ -54,7 +45,6 @@ export default function PlacePredictionModal({
   const {
     writeContract,
     data: hash,
-    isPending,
     isSuccess: isWriteSuccess,
   } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmSuccess } =

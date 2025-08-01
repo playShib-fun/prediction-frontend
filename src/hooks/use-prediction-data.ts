@@ -1,14 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { predictionApi } from "@/lib/graphql-queries";
-import type {
-  StartRound,
-  RewardsCalculated,
-  LockRound,
-  EndRound,
-  Claim,
-  BetBull,
-  BetBear,
-} from "@/lib/graphql-client";
 
 // Query Keys
 export const predictionQueryKeys = {
@@ -96,6 +87,42 @@ export const filterAndSortData = {
       const amountA = parseFloat(a.amount);
       const amountB = parseFloat(b.amount);
       return ascending ? amountA - amountB : amountB - amountA;
+    });
+  },
+
+  // Sort by reward amount (highest first)
+  byRewardAmount: <T extends { rewardAmount: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const amountA = parseFloat(a.rewardAmount);
+      const amountB = parseFloat(b.rewardAmount);
+      return ascending ? amountA - amountB : amountB - amountA;
+    });
+  },
+
+  // Sort by lock price (highest first)
+  byLockPrice: <T extends { lockPrice: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const priceA = parseFloat(a.lockPrice);
+      const priceB = parseFloat(b.lockPrice);
+      return ascending ? priceA - priceB : priceB - priceA;
+    });
+  },
+
+  // Sort by close price (highest first)
+  byClosePrice: <T extends { closePrice: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const priceA = parseFloat(a.closePrice);
+      const priceB = parseFloat(b.closePrice);
+      return ascending ? priceA - priceB : priceB - priceA;
     });
   },
 
@@ -208,7 +235,10 @@ export const useRewardsCalculated = (options?: {
       if (options?.sortBy === "timestamp") {
         filtered = filterAndSortData.byTimestamp(filtered, options.ascending);
       } else if (options?.sortBy === "rewardAmount") {
-        filtered = filterAndSortData.byAmount(filtered, options.ascending);
+        filtered = filterAndSortData.byRewardAmount(
+          filtered,
+          options.ascending
+        );
       } else {
         filtered = filterAndSortData.byTimestamp(filtered, false);
       }
@@ -267,7 +297,7 @@ export const useLockRounds = (options?: {
       } else if (options?.sortBy === "epoch") {
         filtered = filterAndSortData.byEpochSort(filtered, options.ascending);
       } else if (options?.sortBy === "lockPrice") {
-        filtered = filterAndSortData.byAmount(filtered, options.ascending);
+        filtered = filterAndSortData.byLockPrice(filtered, options.ascending);
       } else {
         filtered = filterAndSortData.byTimestamp(filtered, false);
       }
@@ -326,7 +356,7 @@ export const useEndRounds = (options?: {
       } else if (options?.sortBy === "epoch") {
         filtered = filterAndSortData.byEpochSort(filtered, options.ascending);
       } else if (options?.sortBy === "closePrice") {
-        filtered = filterAndSortData.byAmount(filtered, options.ascending);
+        filtered = filterAndSortData.byClosePrice(filtered, options.ascending);
       } else {
         filtered = filterAndSortData.byTimestamp(filtered, false);
       }

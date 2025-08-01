@@ -29,17 +29,14 @@ import { Progress } from "../ui/progress";
 import { useEffect, useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ShineBorder } from "../magicui/shine-border";
-import { useTheme } from "next-themes";
 import { TextAnimate } from "../magicui/text-animate";
 import { motion } from "motion/react";
 import NeumorphButton from "../ui/neumorph-button";
-import { useStateStore } from "@/stores";
 import {
   useBetBears,
   useBetBulls,
   useClaims,
   useStartRounds,
-  useUserBets,
 } from "@/hooks/use-prediction-data";
 import {
   useFormattedCurrentPrice,
@@ -60,9 +57,7 @@ export default function GameCard({
   state,
   active = false,
 }: GameCardProps) {
-  const { setState } = useStateStore((state) => state);
-  const theme = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const { data: startRound, isLoading: isStartLoading } = useStartRounds();
 
   const [progress, setProgress] = useState(0);
@@ -81,8 +76,9 @@ export default function GameCard({
   } = useBetBulls({
     roundId: roundId.toString(),
   });
-  const { data: priceByRoundId, isLoading: isPriceByRoundIdLoading } =
-    useFormattedPriceByRoundId(roundId.toString());
+  const { data: priceByRoundId } = useFormattedPriceByRoundId(
+    roundId.toString()
+  );
   const [bearOdds, setBearOdds] = useState(1);
   const [bullOdds, setBullOdds] = useState(1);
   // refetch every 5 seconds
@@ -90,8 +86,9 @@ export default function GameCard({
     useFormattedCurrentPrice();
 
   // find the next-round epoch if this round has ended and then pull the round price for it's epoch
-  const { data: finalPrice, isLoading: isFinalPriceLoading } =
-    useFormattedPriceByRoundId((roundId + 1).toString());
+  const { data: finalPrice } = useFormattedPriceByRoundId(
+    (roundId + 1).toString()
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -133,7 +130,7 @@ export default function GameCard({
   // connected wallet address
   const { address } = useWalletConnection();
 
-  const { data: claimableBets, isLoading: isClaimableBetsLoading } = useClaims({
+  const { data: claimableBets } = useClaims({
     sender: address ?? "",
     roundId: roundId.toString(),
   });

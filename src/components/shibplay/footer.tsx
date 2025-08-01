@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  ChartArea,
-  Clock,
-  Home,
-  MessageCircleQuestionMark,
-  ShieldQuestionMark,
-  Trophy,
-  Wallet,
-} from "lucide-react";
-import DarkModeToggle from "../dark-mode-toggle";
+import { ChartArea, Clock, Home } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Dock, DockIcon } from "../magicui/dock";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";

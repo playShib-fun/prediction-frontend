@@ -3,10 +3,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   bonePriceConfig,
-  type BonePriceData,
   type BonePriceState,
   formatBonePrice,
   formatTimestamp,
@@ -382,12 +381,22 @@ export const usePriceHistory = (limit = 10) => {
 
   // This is a simplified version - in reality you'd query events
   return useQuery({
-    queryKey: [...bonePriceQueryKeys.all, "priceHistory", limit],
+    queryKey: [
+      ...bonePriceQueryKeys.all,
+      "priceHistory",
+      limit,
+      latestPriceData,
+    ],
     queryFn: async () => {
       // Simulate price history - replace with actual event queries
       const history = [];
       if (latestPriceData) {
         const currentRoundId = Number(latestPriceData[0]);
+        const history: Array<{
+          roundId: number;
+          price: number;
+          timestamp: Date;
+        }> = [];
         for (let i = 0; i < limit; i++) {
           history.push({
             roundId: currentRoundId - i,
