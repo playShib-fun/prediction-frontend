@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { predictionApi } from "@/lib/graphql-queries";
+import type { Round } from "@/lib/graphql-client";
 
 // Query Keys
 export const predictionQueryKeys = {
@@ -21,6 +22,8 @@ export const predictionQueryKeys = {
   betBull: (id: string) => [...predictionQueryKeys.betBulls(), id] as const,
   betBears: () => [...predictionQueryKeys.all, "betBears"] as const,
   betBear: (id: string) => [...predictionQueryKeys.betBears(), id] as const,
+  rounds: () => [...predictionQueryKeys.all, "rounds"] as const,
+  round: (id: string) => [...predictionQueryKeys.rounds(), id] as const,
   roundsData: () => [...predictionQueryKeys.all, "roundsData"] as const,
   betsData: () => [...predictionQueryKeys.all, "betsData"] as const,
 };
@@ -152,6 +155,51 @@ export const filterAndSortData = {
     return data.filter((item) =>
       item.transactionHash.toLowerCase().includes(hash.toLowerCase())
     );
+  },
+
+  // Filter by round ID for Round type
+  byRoundIdForRound: <T extends { roundId: string }>(
+    data: T[],
+    roundId: string
+  ): T[] => {
+    if (!roundId) return data;
+    return data.filter((item) => item.roundId === roundId);
+  },
+
+  // Sort by start timestamp (newest first)
+  byStartTimestamp: <T extends { startTimeStamp: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const timeA = parseInt(a.startTimeStamp);
+      const timeB = parseInt(b.startTimeStamp);
+      return ascending ? timeA - timeB : timeB - timeA;
+    });
+  },
+
+  // Sort by exit timestamp (newest first)
+  byExitTimestamp: <T extends { exitTimeStamp: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const timeA = parseInt(a.exitTimeStamp);
+      const timeB = parseInt(b.exitTimeStamp);
+      return ascending ? timeA - timeB : timeB - timeA;
+    });
+  },
+
+  // Sort by price pool (highest first)
+  byPricePool: <T extends { pricePool: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const poolA = parseFloat(a.pricePool);
+      const poolB = parseFloat(b.pricePool);
+      return ascending ? poolA - poolB : poolB - poolA;
+    });
   },
 };
 
@@ -545,6 +593,65 @@ export const useBetBear = (id: string) => {
   return useQuery({
     queryKey: predictionQueryKeys.betBear(id),
     queryFn: () => predictionApi.getBetBearById(id),
+    enabled: !!id,
+  });
+};
+
+// Rounds
+export const useRounds = (options?: {
+  roundId?: string;
+  limit?: number;
+  sortBy?: "startTimeStamp" | "exitTimeStamp" | "pricePool" | "roundId";
+  ascending?: boolean;
+}) => {
+  return useQuery({
+    queryKey: predictionQueryKeys.rounds(),
+    queryFn: predictionApi.getAllRounds,
+    select: (data) => {
+      let filtered = data;
+
+      if (options?.roundId) {
+        filtered = filterAndSortData.byRoundIdForRound(
+          filtered,
+          options.roundId
+        );
+      }
+
+      if (options?.sortBy === "startTimeStamp") {
+        filtered = filterAndSortData.byStartTimestamp(
+          filtered,
+          options.ascending
+        );
+      } else if (options?.sortBy === "exitTimeStamp") {
+        filtered = filterAndSortData.byExitTimestamp(
+          filtered,
+          options.ascending
+        );
+      } else if (options?.sortBy === "pricePool") {
+        filtered = filterAndSortData.byPricePool(filtered, options.ascending);
+      } else if (options?.sortBy === "roundId") {
+        filtered = [...filtered].sort((a, b) => {
+          const roundIdA = parseInt(a.roundId);
+          const roundIdB = parseInt(b.roundId);
+          return options.ascending ? roundIdA - roundIdB : roundIdB - roundIdA;
+        });
+      } else {
+        filtered = filterAndSortData.byStartTimestamp(filtered, false);
+      }
+
+      if (options?.limit) {
+        filtered = filterAndSortData.limit(filtered, options.limit);
+      }
+
+      return filtered;
+    },
+  });
+};
+
+export const useRound = (id: string) => {
+  return useQuery({
+    queryKey: predictionQueryKeys.round(id),
+    queryFn: () => predictionApi.getRoundById(id),
     enabled: !!id,
   });
 };

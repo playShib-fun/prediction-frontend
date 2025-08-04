@@ -16,8 +16,12 @@ const puppynet = {
     decimals: 18,
   },
   rpcUrls: {
-    default: { http: ["https://puppynet.shibrpc.com"] },
-    public: { http: ["https://puppynet.shibrpc.com"] },
+    default: {
+      http: ["https://puppynet-internal-hfkwce0y8rsqx2zqruxx.shibrpc.com"],
+    },
+    public: {
+      http: ["https://puppynet-internal-hfkwce0y8rsqx2zqruxx.shibrpc.com"],
+    },
   },
   blockExplorers: {
     default: { name: "Puppyscan", url: "https://puppyscan.shib.io" },

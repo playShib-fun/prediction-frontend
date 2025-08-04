@@ -7,6 +7,7 @@ import type {
   Claim,
   BetBull,
   BetBear,
+  Round,
 } from "./graphql-client";
 
 // GraphQL Queries
@@ -265,6 +266,33 @@ const QUERIES = {
       }
     }
   `,
+
+  // Rounds
+  GET_ALL_ROUNDS: `
+    query GetAllRounds {
+      rounds {
+        id
+        pricePool
+        roundId
+        startTimeStamp
+        users
+        exitTimeStamp
+      }
+    }
+  `,
+
+  GET_ROUND_BY_ID: `
+    query GetRoundById($id: String!) {
+      roundsById(id: $id) {
+        exitTimeStamp
+        id
+        pricePool
+        roundId
+        startTimeStamp
+        users
+      }
+    }
+  `,
 };
 
 // API Functions
@@ -402,5 +430,21 @@ export const predictionApi = {
       betBears: BetBear[];
     }>(QUERIES.GET_ALL_BETS_DATA);
     return response;
+  },
+
+  // Rounds
+  getAllRounds: async (): Promise<Round[]> => {
+    const response = await graphqlClient.request<{ rounds: Round[] }>(
+      QUERIES.GET_ALL_ROUNDS
+    );
+    return response.rounds;
+  },
+
+  getRoundById: async (id: string): Promise<Round> => {
+    const response = await graphqlClient.request<{ roundsById: Round }>(
+      QUERIES.GET_ROUND_BY_ID,
+      { id }
+    );
+    return response.roundsById;
   },
 };

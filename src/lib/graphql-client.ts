@@ -79,6 +79,15 @@ export interface BetBear {
   transactionHash: string;
 }
 
+export interface Round {
+  id: string;
+  pricePool: string;
+  roundId: string;
+  startTimeStamp: string;
+  users: string;
+  exitTimeStamp: string;
+}
+
 // Query types
 export interface QueryResponse {
   startRounds: StartRound[];

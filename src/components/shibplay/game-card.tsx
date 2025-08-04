@@ -12,6 +12,7 @@ import {
   Coins,
   DollarSign,
   Hash,
+  PiggyBank,
   TowerControl,
   Trophy,
   XCircle,
@@ -37,6 +38,7 @@ import {
   useBetBulls,
   useClaims,
   useStartRounds,
+  useRound,
 } from "@/hooks/use-prediction-data";
 import {
   useFormattedCurrentPrice,
@@ -45,6 +47,7 @@ import {
 import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
+import { predictionApi } from "@/lib/graphql-queries";
 
 interface GameCardProps {
   roundId: number;
@@ -88,6 +91,10 @@ export default function GameCard({
   // find the next-round epoch if this round has ended and then pull the round price for it's epoch
   const { data: finalPrice } = useFormattedPriceByRoundId(
     (roundId + 1).toString()
+  );
+
+  const { data: round, isLoading: isRoundLoading } = useRound(
+    roundId.toString()
   );
 
   useEffect(() => {
@@ -239,7 +246,7 @@ export default function GameCard({
             <div className="text-2xl text-primary z-0 font-black flex items-center gap-1">
               <DollarSign className="w-6 h-6" />
               <TextAnimate animation="slideLeft" by="character">
-                {priceByRoundId ? priceByRoundId.price.toFixed(8) : "-"}
+                {priceByRoundId ? priceByRoundId.price.toFixed(4) : "-"}
               </TextAnimate>
             </div>
             <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
@@ -247,57 +254,79 @@ export default function GameCard({
               Entry
             </h2>
           </div>
-          <div className="flex flex-col justify-between group w-full">
-            <div
-              className={`text-2xl font-black ${
-                priceByRoundId &&
-                currentPrice &&
-                priceByRoundId.price > currentPrice
-                  ? "text-red-500"
-                  : "text-green-500"
-              } flex items-center w-full`}
-            >
-              <DollarSign className="w-6 h-6" />
+          {state !== "ended" && (
+            <div className="flex flex-col justify-between group w-full">
+              <div
+                className={`text-2xl font-black ${
+                  priceByRoundId &&
+                  currentPrice &&
+                  priceByRoundId.price > currentPrice
+                    ? "text-red-500"
+                    : "text-green-500"
+                } flex items-center w-full`}
+              >
+                <DollarSign className="w-6 h-6" />
 
-              <TextAnimate animation="slideLeft" by="character">
-                {currentPrice ? currentPrice.toFixed(8) : "-"}
-              </TextAnimate>
-              <div className="flex-1 w-full h-4"></div>
-              {priceByRoundId &&
-              currentPrice &&
-              priceByRoundId.price < currentPrice ? (
-                <div className="text-green-500 text-sm animate-bounce">
-                  <ArrowUp className="w-6 h-6" />
-                </div>
-              ) : (
-                <div className="text-red-500 text-sm animate-bounce">
-                  <ArrowDown className="w-6 h-6" />
-                </div>
-              )}
+                <TextAnimate animation="slideLeft" by="character">
+                  {currentPrice ? currentPrice.toFixed(4) : "-"}
+                </TextAnimate>
+                <div className="flex-1 w-full h-4"></div>
+                {priceByRoundId &&
+                currentPrice &&
+                priceByRoundId.price < currentPrice ? (
+                  <div className="text-green-500 text-sm animate-bounce">
+                    <ArrowUp className="w-6 h-6" />
+                  </div>
+                ) : (
+                  <div className="text-red-500 text-sm animate-bounce">
+                    <ArrowDown className="w-6 h-6" />
+                  </div>
+                )}
+              </div>
+              <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
+                <ChartLine className="w-4 h-4" />
+                Current
+              </h2>
             </div>
-            <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
-              <ChartLine className="w-4 h-4" />
-              Current
-            </h2>
-          </div>
+          )}
+          {state === "ended" && (
+            <div className="flex flex-col justify-between group">
+              <p
+                className={`text-2xl font-black ${
+                  state === "ended" && finalPrice
+                    ? "text-blue-500"
+                    : "dark:text-secondary text-gray-500"
+                } flex items-center gap-1`}
+              >
+                <DollarSign className="w-6 h-6" />
+                {state === "ended" && finalPrice
+                  ? finalPrice.price.toFixed(4)
+                  : "-"}
+              </p>
+              <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
+                <ChartArea className="w-4 h-4" />
+                Final
+              </h2>
+            </div>
+          )}
+
           <div className="flex flex-col justify-between group">
             <p
               className={`text-2xl font-black ${
-                state === "ended" && finalPrice
+                round?.pricePool
                   ? "text-blue-500"
                   : "dark:text-secondary text-gray-500"
               } flex items-center gap-1`}
             >
               <DollarSign className="w-6 h-6" />
-              {state === "ended" && finalPrice
-                ? finalPrice.price.toFixed(8)
-                : "-"}
+              {round?.pricePool || "0.0000"}
             </p>
             <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
-              <ChartArea className="w-4 h-4" />
-              Final
+              <PiggyBank className="w-4 h-4" />
+              Prize Pool
             </h2>
           </div>
+
           {(state === "upcoming" || state === "live") && (
             <div className="flex items-center gap-2 w-full">
               <Progress value={progress} className="w-full bg-primary/20" />
