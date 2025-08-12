@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { useEffect, useMemo, useState } from "react";
 import { useRounds } from "@/hooks/use-prediction-data";
-import { useWalletActions, useWalletConnection } from "@/hooks/use-wallet";
+import { useWalletConnection } from "@/hooks/use-wallet";
 import ChartsDialog from "@/components/shibplay/charts-dialog";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Header() {
   const { data: rounds } = useRounds();
-  const { isConnected } = useWalletConnection();
-  const { connect, disconnect, connectors } = useWalletActions();
+  // keep hook for potential future state; not directly used due to RainbowKit Custom
+  useWalletConnection();
   const [isLarge, setIsLarge] = useState(false);
 
   useEffect(() => {
@@ -59,21 +60,20 @@ export default function Header() {
 
           {/* Right: Actions (mobile connect + desktop actions) */}
           {!isLarge && (
-            <Button
-              onClick={() => {
-                if (!isConnected) {
-                  const connector = connectors?.[0];
-                  if (connector) connect({ connector });
-                } else {
-                  disconnect();
-                }
+            <ConnectButton.Custom>
+              {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
+                const connected = mounted && account && chain;
+                return (
+                  <Button
+                    onClick={() => (connected ? openAccountModal() : openConnectModal())}
+                    variant="outline"
+                    className="md:hidden h-9 px-3 text-xs border-primary text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"
+                  >
+                    {connected ? account.displayName : "Connect Wallet"}
+                  </Button>
+                );
               }}
-              aria-label={!isConnected ? "Connect Wallet" : "Disconnect"}
-              variant="outline"
-              className="md:hidden h-9 px-3 text-xs border-primary text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"
-            >
-              {!isConnected ? "Connect Wallet" : "Connected"}
-            </Button>
+            </ConnectButton.Custom>
           )}
           {/* Desktop actions */}
           {isLarge && (
@@ -161,19 +161,19 @@ export default function Header() {
           <div className="grid grid-cols-3 gap-2 pb-3">
             <Link href="/">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <Home className="w-7 h-7" />
+                <Home className="w-8 h-8" />
                 <span className="sr-only">Home</span>
               </Button>
             </Link>
             <Link href="/history">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <History className="w-7 h-7" />
+                <History className="w-8 h-8" />
                 <span className="sr-only">History</span>
               </Button>
             </Link>
             <ChartsDialog>
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <LineChart className="w-7 h-7" />
+                <LineChart className="w-8 h-8" />
                 <span className="sr-only">Charts</span>
               </Button>
             </ChartsDialog>

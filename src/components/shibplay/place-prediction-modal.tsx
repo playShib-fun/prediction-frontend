@@ -172,7 +172,7 @@ export default function PlacePredictionModal({
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className="bg-gradient-to-b from-gray-900/95 to-black/95 backdrop-blur-xl border border-gray-800 max-w-lg mx-auto">
+      <DrawerContent className="bg-gradient-to-b from-gray-900/95 to-black/95 backdrop-blur-xl border border-gray-800 max-w-lg mx-auto z-[500] pb-36 md:pb-10">
         <DrawerHeader className="max-w-lg mx-auto w-full">
           <DrawerTitle>
             <div className="text-2xl text-white mb-4 flex items-center gap-2">
