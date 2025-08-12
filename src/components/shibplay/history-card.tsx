@@ -294,6 +294,7 @@ export default function HistoryCard({
 
   return (
     <motion.div
+      className="w-[90%] md:w-full mx-auto"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
