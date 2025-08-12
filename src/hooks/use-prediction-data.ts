@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { predictionApi } from "@/lib/graphql-queries";
-// import type { Round } from "@/lib/graphql-client";
+// Types intentionally not imported to keep selects working with different shapes
 
 // Query Keys
 export const predictionQueryKeys = {
@@ -623,10 +623,12 @@ export const useRounds = (options?: {
           options.ascending
         );
       } else if (options?.sortBy === "exitTimeStamp") {
-        filtered = filterAndSortData.byExitTimestamp(
-          filtered,
+        // Cast for sorting by exitTimeStamp without narrowing Round type
+        const temp = filterAndSortData.byExitTimestamp(
+          filtered as unknown as { exitTimeStamp: string }[],
           options.ascending
         );
+        filtered = temp as unknown as typeof filtered;
       } else if (options?.sortBy === "pricePool") {
         filtered = filterAndSortData.byPricePool(filtered, options.ascending);
       } else if (options?.sortBy === "roundId") {
