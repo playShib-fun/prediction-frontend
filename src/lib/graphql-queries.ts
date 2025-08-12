@@ -277,19 +277,27 @@ const QUERIES = {
         startTimeStamp
         users
         exitTimeStamp
+        bearAmount
+        bullAmount
+        status
+        updateTimeStamp
       }
     }
   `,
 
   GET_ROUND_BY_ID: `
     query GetRoundById($id: String!) {
-      roundsById(id: $id) {
+      rounds(where: { roundId_eq: $id }, limit: 1) {
         exitTimeStamp
         id
         pricePool
         roundId
         startTimeStamp
         users
+        bearAmount
+        bullAmount
+        status
+        updateTimeStamp
       }
     }
   `,
@@ -441,10 +449,10 @@ export const predictionApi = {
   },
 
   getRoundById: async (id: string): Promise<Round> => {
-    const response = await graphqlClient.request<{ roundsById: Round }>(
+    const response = await graphqlClient.request<{ rounds: Round[] }>(
       QUERIES.GET_ROUND_BY_ID,
       { id }
     );
-    return response.roundsById;
+    return response.rounds?.[0] as Round;
   },
 };

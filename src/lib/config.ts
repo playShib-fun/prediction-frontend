@@ -31,16 +31,25 @@ const puppynet = {
 
 const supportedChains: Chain[] = [shibarium, puppynet];
 
-export const config = getDefaultConfig({
-  appName: "ShibPlay",
-  projectId,
-  chains: supportedChains as any,
-  ssr: true,
-  storage: createStorage({
-    storage: cookieStorage,
-  }),
-  transports: supportedChains.reduce(
-    (obj, chain) => ({ ...obj, [chain.id]: http() }),
-    {}
-  ),
-});
+// Ensure a single Wagmi/RainbowKit config instance across HMR to avoid
+// reinitializing WalletConnect Core multiple times.
+declare global {
+  // eslint-disable-next-line no-var
+  var __shibplay_wagmi_config: ReturnType<typeof getDefaultConfig> | undefined;
+}
+
+export const config =
+  globalThis.__shibplay_wagmi_config ||
+  (globalThis.__shibplay_wagmi_config = getDefaultConfig({
+    appName: "ShibPlay",
+    projectId,
+    chains: supportedChains as any,
+    ssr: true,
+    storage: createStorage({
+      storage: cookieStorage,
+    }),
+    transports: supportedChains.reduce(
+      (obj, chain) => ({ ...obj, [chain.id]: http() }),
+      {}
+    ),
+  }));

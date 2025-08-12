@@ -39,6 +39,7 @@ export default function PlacePredictionModal({
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const MIN_BET = 10;
 
   const { isConnected } = useWalletConnection();
   const { data: balance, isLoading: isBalanceLoading } = useNativeBalance();
@@ -46,6 +47,8 @@ export default function PlacePredictionModal({
     writeContract,
     data: hash,
     isSuccess: isWriteSuccess,
+    isError: isWriteError,
+    error: writeError,
   } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmSuccess } =
     useWaitForTransactionReceipt({
@@ -77,6 +80,8 @@ export default function PlacePredictionModal({
       }
     } catch (error) {
       toast.error("Failed to place bet. Please try again.");
+      setIsSubmitting(false);
+      setAmount("");
     }
   };
 
@@ -100,6 +105,25 @@ export default function PlacePredictionModal({
     direction,
   ]);
 
+  // Reset state on user rejection/cancel (no tx hash, write error)
+  useEffect(() => {
+    if (isWriteError) {
+      setIsSubmitting(false);
+      setAmount("");
+      // Optional toast for visibility
+      toast.info("Transaction cancelled");
+    }
+  }, [isWriteError]);
+
+  // When drawer closes by any means, clear values
+  useEffect(() => {
+    if (!isOpen) {
+      setAmount("");
+      setIsSubmitting(false);
+      setDirection(initialDirection);
+    }
+  }, [isOpen, initialDirection]);
+
   // Calculate potential winnings based on direction and odds
   const potentialWinnings = useMemo(() => {
     if (!amount || !balance?.formatted) return 0;
@@ -121,7 +145,7 @@ export default function PlacePredictionModal({
   const isValidAmount = useMemo(() => {
     if (!amount || !balance?.formatted) return false;
     const betAmount = parseFloat(amount);
-    return betAmount > 0 && betAmount <= Number(balance.formatted);
+    return betAmount >= MIN_BET && betAmount <= Number(balance.formatted);
   }, [amount, balance?.formatted]);
 
   // Handle amount input with proper validation
@@ -244,9 +268,16 @@ export default function PlacePredictionModal({
               />
               {amount && !isValidAmount && (
                 <p className="text-xs text-red-400 mt-1">
-                  {parseFloat(amount) > Number(balance?.value || 0)
-                    ? "Insufficient balance"
-                    : "Invalid amount"}
+                  {(() => {
+                    const betAmount = parseFloat(amount);
+                    if (betAmount > Number(balance?.formatted || 0)) {
+                      return "Insufficient balance";
+                    }
+                    if (betAmount < MIN_BET) {
+                      return `Minimum stake is ${MIN_BET} BONE`;
+                    }
+                    return "Invalid amount";
+                  })()}
                 </p>
               )}
             </div>
@@ -293,9 +324,7 @@ export default function PlacePredictionModal({
                 Processing...
               </div>
             ) : (
-              `Place ${
-                direction.charAt(0).toUpperCase() + direction.slice(1)
-              } Bet`
+              "Play"
             )}
           </Button>
 
@@ -305,7 +334,13 @@ export default function PlacePredictionModal({
             </p>
           )}
         </DrawerFooter>
-        <DrawerClose />
+        <DrawerClose
+          onClick={() => {
+            setAmount("");
+            setIsSubmitting(false);
+            setDirection(initialDirection);
+          }}
+        />
       </DrawerContent>
     </Drawer>
   );

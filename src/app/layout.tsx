@@ -11,6 +11,8 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "Play Shib",
   description: "Play Shib",
+  manifest: "/manifest.json",
+  themeColor: "#0f0f0f",
 };
 
 export default async function RootLayout({
@@ -28,6 +30,17 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="bg-gray-100 dark:bg-gray-950 relative">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+            `,
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

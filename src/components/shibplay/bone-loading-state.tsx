@@ -8,19 +8,22 @@ import shibStare from "@/animations/shib-stare.json";
 
 interface BoneLoadingStateProps {
   text: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   animation?: "bone" | "shib-happy" | "shib-sad" | "shib-stare";
+  textClassName?: string;
 }
 
 export default function BoneLoadingState({
   text,
   size = "md",
   animation = "bone",
+  textClassName,
 }: BoneLoadingStateProps) {
   const sizeClasses = {
     sm: "size-32",
     md: "size-48",
     lg: "size-64",
+    xl: "size-96",
   };
 
   const animationData = {
@@ -37,7 +40,9 @@ export default function BoneLoadingState({
         loop={true}
         className={sizeClasses[size]}
       />
-      <p className="text-center text-gray-400 font-medium text-lg">{text}</p>
+      <p className={`text-center text-gray-100 font-semibold text-xl ${textClassName || ""}`}>
+        {text}
+      </p>
     </div>
   );
 }

@@ -9,7 +9,15 @@ import { config } from "@/lib/config";
 import { DynamicIslandProvider } from "@/components/ui/dynamic-island";
 import { StarsBackground } from "@/components/shibplay/stars-background";
 
-const queryClient = new QueryClient();
+// Ensure a singleton QueryClient to prevent multiple listeners during HMR
+declare global {
+  // eslint-disable-next-line no-var
+  var __shibplay_query_client: QueryClient | undefined;
+}
+
+const queryClient =
+  globalThis.__shibplay_query_client ||
+  (globalThis.__shibplay_query_client = new QueryClient());
 
 type Props = {
   children: React.ReactNode;
