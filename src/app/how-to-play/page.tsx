@@ -34,7 +34,7 @@ import Link from "next/link";
 const steps = [
   {
     icon: <Target className="w-5 h-5" />,
-    title: "Choose Your Prediction",
+    title: "Choose Your Predictions",
     description: "Decide if BONE price will go UP or DOWN",
     details:
       "Look at the current market conditions and make your prediction. You can choose UP (higher) or DOWN (lower) based on your analysis or intuition.",
