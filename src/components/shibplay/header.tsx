@@ -60,7 +60,15 @@ export default function Header() {
           {/* Right: Actions (mobile connect + desktop actions) */}
           {!isLarge && (
             <Button
-              onClick={() => (!isConnected ? connect({ connector: connectors[0] }) : disconnect())}
+              onClick={() => {
+                if (!isConnected) {
+                  const connector = connectors?.[0];
+                  if (connector) connect({ connector });
+                } else {
+                  disconnect();
+                }
+              }}
+              aria-label={!isConnected ? "Connect Wallet" : "Disconnect"}
               variant="outline"
               className="md:hidden h-9 px-3 text-xs border-primary text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"
             >
@@ -153,19 +161,19 @@ export default function Header() {
           <div className="grid grid-cols-3 gap-2 pb-3">
             <Link href="/">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <Home className="w-6 h-6" />
+                <Home className="w-7 h-7" />
                 <span className="sr-only">Home</span>
               </Button>
             </Link>
             <Link href="/history">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <History className="w-6 h-6" />
+                <History className="w-7 h-7" />
                 <span className="sr-only">History</span>
               </Button>
             </Link>
             <ChartsDialog>
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <LineChart className="w-6 h-6" />
+                <LineChart className="w-7 h-7" />
                 <span className="sr-only">Charts</span>
               </Button>
             </ChartsDialog>

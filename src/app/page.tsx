@@ -98,7 +98,7 @@ export default function Home() {
 
   return (
     <>
-      <main className="h-full flex-1 w-full flex items-center justify-center transition-all duration-300 ease-in-out pt-2 md:pt-6">
+      <main className="h-full flex-1 w-full flex items-center justify-center transition-all duration-300 ease-in-out pt-2 md:pt-6 pb-24 md:pb-0">
         {isLoading || isEndLoading || isLockLoading ? (
           <Loading />
         ) : (
