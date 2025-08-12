@@ -14,8 +14,8 @@ import type {
 const QUERIES = {
   // Start Rounds
   GET_ALL_START_ROUNDS: `
-    query GetAllStartRounds {
-      startRounds {
+    query GetAllStartRounds($orderBy: String, $orderDirection: String) {
+      startRounds(orderBy: $orderBy, orderDirection: $orderDirection) {
         epoch
         id
         logIndex
@@ -269,14 +269,17 @@ const QUERIES = {
 
   // Rounds
   GET_ALL_ROUNDS: `
-    query GetAllRounds {
-      rounds {
+    query GetAllRounds($orderBy: [RoundsOrderByInput!]) {
+      rounds(orderBy: $orderBy) {
+        bearAmount
+        bullAmount
         id
         pricePool
         roundId
         startTimeStamp
+        status
+        updateTimeStamp
         users
-        exitTimeStamp
       }
     }
   `,
@@ -284,11 +287,14 @@ const QUERIES = {
   GET_ROUND_BY_ID: `
     query GetRoundById($id: String!) {
       roundsById(id: $id) {
-        exitTimeStamp
+        bearAmount
+        bullAmount
         id
         pricePool
         roundId
         startTimeStamp
+        status
+        updateTimeStamp
         users
       }
     }
@@ -298,9 +304,13 @@ const QUERIES = {
 // API Functions
 export const predictionApi = {
   // Start Rounds
-  getAllStartRounds: async (): Promise<StartRound[]> => {
+  getAllStartRounds: async (
+    orderBy?: string,
+    orderDirection?: string
+  ): Promise<StartRound[]> => {
     const response = await graphqlClient.request<{ startRounds: StartRound[] }>(
-      QUERIES.GET_ALL_START_ROUNDS
+      QUERIES.GET_ALL_START_ROUNDS,
+      { orderBy, orderDirection }
     );
     return response.startRounds;
   },
@@ -433,9 +443,18 @@ export const predictionApi = {
   },
 
   // Rounds
-  getAllRounds: async (): Promise<Round[]> => {
+  getAllRounds: async (
+    orderBy?: string,
+    orderDirection?: string
+  ): Promise<Round[]> => {
+    const orderByInput =
+      orderBy && orderDirection
+        ? [`${orderBy}_${orderDirection.toUpperCase()}`]
+        : undefined;
+
     const response = await graphqlClient.request<{ rounds: Round[] }>(
-      QUERIES.GET_ALL_ROUNDS
+      QUERIES.GET_ALL_ROUNDS,
+      { orderBy: orderByInput }
     );
     return response.rounds;
   },

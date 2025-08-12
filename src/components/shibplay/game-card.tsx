@@ -37,34 +37,43 @@ import {
   useBetBears,
   useBetBulls,
   useClaims,
-  useStartRounds,
-  useRound,
 } from "@/hooks/use-prediction-data";
 import {
   useFormattedCurrentPrice,
   useFormattedPriceByRoundId,
 } from "@/hooks/use-bone-price";
-import { StartRound } from "@/lib/graphql-client";
+import { Round } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
-import { predictionApi } from "@/lib/graphql-queries";
+
+type GameCardState = "live" | "ended" | "upcoming";
 
 interface GameCardProps {
-  roundId: number;
-  state: "live" | "ended" | "upcoming";
+  round: Round;
   active?: boolean;
 }
 
+const getGameCardState = (status: string): GameCardState => {
+  switch (status.toLowerCase()) {
+    case "live":
+      return "live";
+    case "ended":
+      return "ended";
+    default:
+      return "upcoming";
+  }
+};
+
 export default function GameCard({
-  roundId,
-  state,
+  round,
   active = false,
 }: GameCardProps) {
-  const [isLoading] = useState(false);
-  const { data: startRound, isLoading: isStartLoading } = useStartRounds();
-
   const [progress, setProgress] = useState(0);
   const [displayTime, setDisplayTime] = useState("0m 0s");
+  
+  // Get the state from the round prop
+  const state = getGameCardState(round.status);
+  const roundId = Number(round.roundId);
   const {
     data: betBears,
     isLoading: isBetBearsLoading,
@@ -93,9 +102,7 @@ export default function GameCard({
     (roundId + 1).toString()
   );
 
-  const { data: round, isLoading: isRoundLoading } = useRound(
-    roundId.toString()
-  );
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -124,15 +131,7 @@ export default function GameCard({
     calculateOdds();
   }, [betBears, betBulls]);
 
-  function getCurrentRound(): StartRound | null {
-    if (isStartLoading) {
-      return null;
-    }
-    const currentRound = startRound?.find((round) => {
-      return round.epoch === roundId.toString();
-    });
-    return currentRound ?? null;
-  }
+
 
   // connected wallet address
   const { address } = useWalletConnection();
@@ -165,10 +164,7 @@ export default function GameCard({
   }, [address, betBears, betBulls]);
 
   function calculateProgress() {
-    if (isStartLoading) {
-      return 0;
-    }
-    const startTimestamp = Number(getCurrentRound()?.timestamp);
+    const startTimestamp = Number(round.startTimeStamp);
     let endTime;
     if (state === "upcoming") {
       endTime = startTimestamp + 5 * 60 * 1000;
@@ -195,14 +191,11 @@ export default function GameCard({
   }
 
   useEffect(() => {
-    if (isStartLoading) {
-      return;
-    }
     const interval = setInterval(() => {
       calculateProgress();
     }, 1000);
     return () => clearInterval(interval);
-  }, [isStartLoading]);
+  }, [round.startTimeStamp, state]);
 
   return (
     <motion.div
@@ -350,11 +343,10 @@ export default function GameCard({
             >
               <NeumorphButton
                 disabled={betPlaced}
-                loading={isLoading}
                 size={"medium"}
                 className="flex-1 rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-pointer text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {!isLoading && <ChevronsUp className="w-8 h-8" />}
+                <ChevronsUp className="w-8 h-8" />
                 <span className="text-lg font-bold">Higher</span>
               </NeumorphButton>
             </PlacePredictionModal>
@@ -370,12 +362,11 @@ export default function GameCard({
               initialDirection="lower"
             >
               <NeumorphButton
-                loading={isLoading}
                 size={"medium"}
                 disabled={betPlaced}
                 className="flex-1 text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {!isLoading && <ChevronsDown className="w-8 h-8" />}
+                <ChevronsDown className="w-8 h-8" />
                 <span className="text-lg font-bold">Lower</span>
               </NeumorphButton>
             </PlacePredictionModal>

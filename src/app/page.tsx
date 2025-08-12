@@ -8,98 +8,56 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
-import {
-  useEndRounds,
-  useLockRounds,
-  useStartRounds,
-} from "@/hooks/use-prediction-data";
+import { useRounds } from "@/hooks/use-prediction-data";
 import Loading from "@/components/shibplay/loading";
 
 export default function Home() {
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [selected, setSelected] = useState(1);
   const [isInitialScroll, setIsInitialScroll] = useState(true);
+
   const {
-    data: startRounds,
+    data: rounds,
     isLoading,
-    refetch: refetchStartRounds,
-  } = useStartRounds({
+    refetch,
+  } = useRounds({
+    orderBy: "startTimeStamp",
+    orderDirection: "desc",
     limit: 5,
-    sortBy: "timestamp",
-    ascending: false,
   });
-  const {
-    data: endRounds,
-    isLoading: isEndLoading,
-    refetch: refetchEndRounds,
-  } = useEndRounds({
-    limit: 5,
-    sortBy: "timestamp",
-    ascending: false,
-  });
-  const {
-    data: lockRounds,
-    isLoading: isLockLoading,
-    refetch: refetchLockRounds,
-  } = useLockRounds({
-    limit: 5,
-    sortBy: "timestamp",
-    ascending: false,
-  });
-
-  function hasRoundEnded(roundId: string) {
-    return endRounds?.some((round) => round.epoch === roundId);
-  }
-
-  function isRoundLocked(roundId: string) {
-    return lockRounds?.some((round) => round.epoch === roundId);
-  }
-
-  function returnGameState(roundId: string) {
-    if (isRoundLocked(roundId)) {
-      if (!hasRoundEnded(roundId)) {
-        return "live";
-      }
-      return "ended";
-    }
-
-    return "upcoming";
-  }
 
   useEffect(() => {
     if (!api) {
       return;
     }
-    if (!startRounds || startRounds.length === 0) {
+    if (!rounds || rounds.length === 0) {
       return;
     }
     if (isInitialScroll) {
-      api.scrollTo(startRounds.length - 2);
-      setSelected(startRounds.length - 2);
+      api.scrollTo(rounds.length - 2);
+      setSelected(rounds.length - 2);
       setIsInitialScroll(false);
     }
 
     api.on("select", () => {
       setSelected(api.selectedScrollSnap());
     });
-  }, [api, startRounds, isInitialScroll]);
+  }, [api, rounds, isInitialScroll]);
 
   useEffect(() => {
-    if (isLoading || isEndLoading || isLockLoading) {
+    if (isLoading) {
       return;
     }
     const interval = setInterval(() => {
-      refetchStartRounds();
-      refetchEndRounds();
-      refetchLockRounds();
+      refetch();
     }, 30000); // 30 seconds
     return () => clearInterval(interval);
-  }, [isLoading, isEndLoading, isLockLoading]);
+  }, [isLoading, refetch]);
 
   return (
     <>
       <main className="h-full flex-1 w-full flex items-center justify-center transition-all duration-300 ease-in-out">
-        {isLoading || isEndLoading || isLockLoading ? (
+        {isLoading ? (
           <Loading />
         ) : (
           <Carousel
@@ -110,9 +68,9 @@ export default function Home() {
             setApi={setApi}
           >
             <CarouselContent className="overflow-x-visible">
-              {startRounds?.reverse().map((round, index) => (
+              {rounds?.reverse().map((round, index) => (
                 <CarouselItem
-                  key={`round-${round.epoch}`}
+                  key={`round-${round.roundId}`}
                   className={`md:basis-1/4 lg:basis-2/3 transition-all duration-300 ease-in-out ${
                     selected === index
                       ? "opacity-100 scale-100"
@@ -120,8 +78,7 @@ export default function Home() {
                   }`}
                 >
                   <GameCard
-                    roundId={Number(round.epoch)}
-                    state={returnGameState(round.epoch)}
+                    round={round}
                     active={selected === index}
                   />
                 </CarouselItem>

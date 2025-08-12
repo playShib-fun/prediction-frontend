@@ -80,12 +80,15 @@ export interface BetBear {
 }
 
 export interface Round {
+  bearAmount: string;
+  bullAmount: string;
   id: string;
   pricePool: string;
   roundId: string;
   startTimeStamp: string;
+  status: string;
+  updateTimeStamp: string;
   users: string;
-  exitTimeStamp: string;
 }
 
 // Query types

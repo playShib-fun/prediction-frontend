@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { predictionApi } from "@/lib/graphql-queries";
-import type { Round } from "@/lib/graphql-client";
 
 // Query Keys
 export const predictionQueryKeys = {
@@ -190,6 +189,18 @@ export const filterAndSortData = {
     });
   },
 
+  // Sort by update timestamp (newest first)
+  byUpdateTimestamp: <T extends { updateTimeStamp: string }>(
+    data: T[],
+    ascending = false
+  ): T[] => {
+    return [...data].sort((a, b) => {
+      const timeA = parseInt(a.updateTimeStamp);
+      const timeB = parseInt(b.updateTimeStamp);
+      return ascending ? timeA - timeB : timeB - timeA;
+    });
+  },
+
   // Sort by price pool (highest first)
   byPricePool: <T extends { pricePool: string }>(
     data: T[],
@@ -215,7 +226,7 @@ export const useStartRounds = (options?: {
 }) => {
   return useQuery({
     queryKey: predictionQueryKeys.startRounds(),
-    queryFn: predictionApi.getAllStartRounds,
+    queryFn: () => predictionApi.getAllStartRounds(),
     select: (data) => {
       let filtered = data;
 
@@ -601,12 +612,15 @@ export const useBetBear = (id: string) => {
 export const useRounds = (options?: {
   roundId?: string;
   limit?: number;
-  sortBy?: "startTimeStamp" | "exitTimeStamp" | "pricePool" | "roundId";
+  sortBy?: "startTimeStamp" | "updateTimeStamp" | "pricePool" | "roundId";
   ascending?: boolean;
+  orderBy?: string;
+  orderDirection?: string;
 }) => {
   return useQuery({
-    queryKey: predictionQueryKeys.rounds(),
-    queryFn: predictionApi.getAllRounds,
+    queryKey: [...predictionQueryKeys.rounds(), options?.orderBy, options?.orderDirection],
+    queryFn: () =>
+      predictionApi.getAllRounds(options?.orderBy, options?.orderDirection),
     select: (data) => {
       let filtered = data;
 
@@ -622,8 +636,8 @@ export const useRounds = (options?: {
           filtered,
           options.ascending
         );
-      } else if (options?.sortBy === "exitTimeStamp") {
-        filtered = filterAndSortData.byExitTimestamp(
+      } else if (options?.sortBy === "updateTimeStamp") {
+        filtered = filterAndSortData.byUpdateTimestamp(
           filtered,
           options.ascending
         );
