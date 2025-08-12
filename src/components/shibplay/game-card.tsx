@@ -47,9 +47,8 @@ import {
 import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
-import { predictionApi } from "@/lib/graphql-queries";
-  import BoneLoadingState from "./bone-loading-state";
-  import { useRoundDetails } from "@/hooks/use-prediction-data";
+import BoneLoadingState from "./bone-loading-state";
+import { useRoundDetails } from "@/hooks/use-prediction-data";
 
 interface GameCardProps {
   roundId: number;
@@ -69,14 +68,12 @@ export default function GameCard({
   const [displayTime, setDisplayTime] = useState("0m 0s");
   const {
     data: betBears,
-    isLoading: isBetBearsLoading,
     refetch: refetchBetBears,
   } = useBetBears({
     roundId: roundId.toString(),
   });
   const {
     data: betBulls,
-    isLoading: isBetBullsLoading,
     refetch: refetchBetBulls,
   } = useBetBulls({
     roundId: roundId.toString(),
@@ -98,7 +95,7 @@ export default function GameCard({
   const { data: round, isLoading: isRoundLoading, refetch: refetchRound } = useRound(
     roundId.toString()
   );
-  const { lockRound, endRound } = useRoundDetails(roundId.toString());
+  const { lockRound} = useRoundDetails(roundId.toString());
   const [isCalculatingRewards, setIsCalculatingRewards] = useState(false);
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -171,20 +168,7 @@ export default function GameCard({
     );
   }, [address, betBears, betBulls]);
 
-  // Moe: Determines the current user's bet side for this round ("bull" or "bear").
-  // Returns null if no bet is found. Used to drive the top-right badge UI.
-  const userBetSide = useMemo<"bull" | "bear" | null>(() => {
-    if (!address) return null;
-    const hasBull = betBulls?.some(
-      (bet) => bet.sender.toLowerCase() === address.toLowerCase()
-    );
-    if (hasBull) return "bull";
-    const hasBear = betBears?.some(
-      (bet) => bet.sender.toLowerCase() === address.toLowerCase()
-    );
-    if (hasBear) return "bear";
-    return null;
-  }, [address, betBulls, betBears]);
+  // Bet-side badge temporarily disabled; calculation removed to avoid unused var
 
   function calculateProgress() {
     if (isStartLoading) {

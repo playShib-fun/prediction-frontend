@@ -48,7 +48,6 @@ export default function PlacePredictionModal({
     data: hash,
     isSuccess: isWriteSuccess,
     isError: isWriteError,
-    error: writeError,
   } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmSuccess } =
     useWaitForTransactionReceipt({

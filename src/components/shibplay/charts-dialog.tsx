@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import Image from "next/image";
 import TradingViewWidget from "./trading-view-widget";
 import { motion, AnimatePresence } from "motion/react";
 

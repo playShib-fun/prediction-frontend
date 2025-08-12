@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { predictionApi } from "@/lib/graphql-queries";
-import type { Round } from "@/lib/graphql-client";
+// import type { Round } from "@/lib/graphql-client";
 
 // Query Keys
 export const predictionQueryKeys = {
