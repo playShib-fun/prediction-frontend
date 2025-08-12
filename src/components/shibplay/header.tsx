@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, Info, Home, LineChart, Wallet, History } from "lucide-react";
+import { Trophy, Info, Home, LineChart, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { useEffect, useMemo, useState } from "react";
@@ -42,7 +42,7 @@ export default function Header() {
     <>
     <header className="fixed top-0 left-0 right-0 z-[200] backdrop-blur supports-[backdrop-filter]:bg-black/40 bg-black/60 border-b border-white/10 shadow-lg">
       <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-12">
-        <div className="h-16 md:h-20 flex items-center gap-4 justify-center md:justify-between">
+        <div className="h-16 md:h-20 flex items-center gap-4 justify-between">
           {/* Left: Logo + Brand */}
           <Link href="/" className="flex items-center gap-2 group">
             <Image
@@ -57,7 +57,17 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Right: Actions (desktop only) */}
+          {/* Right: Actions (mobile connect + desktop actions) */}
+          {!isLarge && (
+            <Button
+              onClick={() => (!isConnected ? connect({ connector: connectors[0] }) : disconnect())}
+              variant="outline"
+              className="md:hidden h-9 px-3 text-xs border-primary text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"
+            >
+              {!isConnected ? "Connect Wallet" : "Connected"}
+            </Button>
+          )}
+          {/* Desktop actions */}
           {isLarge && (
           <nav className="hidden lg:flex items-center gap-3 sm:gap-4">
             <Link href="/how-to-play" target="_blank" rel="noopener noreferrer">
@@ -113,7 +123,7 @@ export default function Header() {
                 <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
                 <Button
                   variant="outline"
-                  className="relative h-11 w-full border-primary text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary rounded-lg"
+                  className="relative h-12 w-full text-base border-primary text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary rounded-lg"
                 >
                   <Info className="w-4 h-4 mr-2" />
                   How it works
@@ -125,14 +135,14 @@ export default function Header() {
               <Button
                 disabled
                 aria-disabled="true"
-                className="relative h-11 w-full rounded-lg cursor-not-allowed
+                className="relative h-12 w-full text-base rounded-lg cursor-not-allowed
                 bg-gradient-to-r from-black/60 via-primary/25 to-black/60
                 text-primary border border-primary/50 shadow-2xl shadow-primary/50 ring-4 ring-primary/40"
               >
                 <span className="pointer-events-none absolute -inset-1 rounded-lg bg-gradient-to-r from-primary/50 via-pink-500/40 to-purple-500/50 blur-xl opacity-90" />
                 <span className="pointer-events-none absolute -inset-2 rounded-lg bg-gradient-to-r from-primary/40 via-pink-500/30 to-purple-500/40 blur-2xl opacity-70 animate-pulse" />
                 <span className="relative z-10 flex items-center gap-2 justify-center w-full">
-                  <Trophy className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,1)]" />
+                  <Trophy className="w-6 h-6 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,1)]" />
                   <span className="text-white/90">Winning</span>
                   <span className="ml-2 text-xs font-semibold text-white bg-primary/50 rounded px-2 py-0.5 shadow shadow-primary/50">{totalRewardsBone.toFixed(2)} BONE</span>
                 </span>
@@ -140,30 +150,22 @@ export default function Header() {
             </div>
           </div>
           {/* Secondary bottom nav: Home, History, Connect, Charts */}
-          <div className="grid grid-cols-4 gap-2 pb-3">
+          <div className="grid grid-cols-3 gap-2 pb-3">
             <Link href="/">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <Home className="w-5 h-5" />
+                <Home className="w-6 h-6" />
                 <span className="sr-only">Home</span>
               </Button>
             </Link>
             <Link href="/history">
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <History className="w-5 h-5" />
+                <History className="w-6 h-6" />
                 <span className="sr-only">History</span>
               </Button>
             </Link>
-            <Button
-              variant="ghost"
-              className="w-full text-gray-300 hover:text-white"
-              onClick={() => (!isConnected ? connect({ connector: connectors[0] }) : disconnect())}
-            >
-              <Wallet className="w-5 h-5" />
-              <span className="sr-only">{isConnected ? "Disconnect" : "Connect"}</span>
-            </Button>
             <ChartsDialog>
               <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
-                <LineChart className="w-5 h-5" />
+                <LineChart className="w-6 h-6" />
                 <span className="sr-only">Charts</span>
               </Button>
             </ChartsDialog>
