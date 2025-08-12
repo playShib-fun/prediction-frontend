@@ -107,15 +107,15 @@ export default function GameCard({
   }, []);
 
   const totalPoolBone = useMemo(() => {
-    const bear = round?.bearAmount ? parseFloat(round.bearAmount) : 0;
-    const bull = round?.bullAmount ? parseFloat(round.bullAmount) : 0;
+    const bear = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
+    const bull = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
     return bear + bull;
   }, [round]);
 
   function calculateOdds() {
     if (isRoundLoading) return;
-    const totalBearAmount = round?.bearAmount ? parseFloat(round.bearAmount) : 0;
-    const totalBullAmount = round?.bullAmount ? parseFloat(round.bullAmount) : 0;
+    const totalBearAmount = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
+    const totalBullAmount = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
     const total = totalBearAmount + totalBullAmount;
 
     const bearOddsValue = totalBearAmount === 0 ? 1 : total / totalBearAmount;

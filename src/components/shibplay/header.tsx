@@ -1,124 +1,86 @@
 "use client";
 
-import { Gamepad, Loader } from "lucide-react";
-import {
-  DynamicIsland,
-  DynamicContainer,
-  DynamicTitle,
-  DynamicDescription,
-  useDynamicIslandSize,
-} from "../ui/dynamic-island";
-import { useStateStore } from "@/stores";
-import { useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { Trophy, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShineBorder } from "@/components/magicui/shine-border";
+import { useMemo } from "react";
+import { useRounds } from "@/hooks/use-prediction-data";
 
 export default function Header() {
-  const { state } = useStateStore((state) => state);
-  const { setSize } = useDynamicIslandSize();
-
-  // Move setSize calls to useEffect to avoid setState during render
-  useEffect(() => {
-    switch (state) {
-      case "default":
-        setSize("default");
-        break;
-      case "loading":
-        setSize("compact");
-        break;
-      case "win":
-        setSize("large");
-        break;
-      case "lose":
-        setSize("large");
-        break;
-      case "tutorial":
-        setSize("massive");
-        break;
-    }
-  }, [state, setSize]);
-
-  function returnIsland() {
-    switch (state) {
-      case "default":
-        return <Logo />;
-      case "loading":
-        return <Loading />;
-      case "win":
-        return <Win />;
-      case "lose":
-        return <Lose />;
-      case "tutorial":
-        return <Tutorial />;
-    }
-  }
+  const { data: rounds } = useRounds();
+  const totalRewardsBone = useMemo(() => {
+    if (!rounds?.length) return 0;
+    return rounds.reduce((sum, r) => {
+      const pool = r.pricePool ? parseFloat(r.pricePool) / 1e18 : 0;
+      if (pool > 0) return sum + pool;
+      const bear = r.bearAmount ? parseFloat(r.bearAmount) / 1e18 : 0;
+      const bull = r.bullAmount ? parseFloat(r.bullAmount) / 1e18 : 0;
+      return sum + bear + bull;
+    }, 0);
+  }, [rounds]);
 
   return (
-    <header className="mt-4">
-      <button>
-        <DynamicIsland id="header">{returnIsland()}</DynamicIsland>
-      </button>
+    <header className="fixed top-0 left-0 right-0 z-[200] backdrop-blur supports-[backdrop-filter]:bg-black/40 bg-black/60 border-b border-white/10 shadow-lg">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-12">
+        <div className="h-16 md:h-20 flex items-center justify-between gap-4">
+          {/* Left: Logo + Brand */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <Image
+              src="/images/shibplay-logo.png"
+              alt="ShibPlay"
+              width={32}
+              height={32}
+              className="rounded-sm shadow-md"
+            />
+            <span className="text-base sm:text-lg font-extrabold tracking-tight text-white">
+              Shib<span className="text-primary">Play</span>
+            </span>
+          </Link>
+
+          {/* Right: Actions */}
+          <nav className="flex items-center gap-3 sm:gap-4">
+            <Link href="/how-to-play" target="_blank" rel="noopener noreferrer">
+              <div className="relative">
+                <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
+                <Button
+                  variant="outline"
+                  className="relative h-10 md:h-11 border-primary text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary rounded-lg px-4 cursor-pointer"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  How it works
+                </Button>
+              </div>
+            </Link>
+            <div className="relative">
+              <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
+              <Button
+                disabled
+                aria-disabled="true"
+                className="relative h-10 md:h-11 px-5 rounded-lg cursor-not-allowed
+                bg-gradient-to-r from-black/60 via-primary/25 to-black/60
+                text-primary border border-primary/50 shadow-2xl shadow-primary/50 ring-4 ring-primary/40
+                hover:brightness-110 active:brightness-110"
+              >
+                {/* Outer glow layers */}
+                <span className="pointer-events-none absolute -inset-1 rounded-lg bg-gradient-to-r from-primary/50 via-pink-500/40 to-purple-500/50 blur-xl opacity-90" />
+                <span className="pointer-events-none absolute -inset-2 rounded-lg bg-gradient-to-r from-primary/40 via-pink-500/30 to-purple-500/40 blur-2xl opacity-70 animate-pulse" />
+                <span className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary/50 blur-sm opacity-60" />
+                {/* Content */}
+                <span className="relative z-10 flex items-center gap-2 w-full">
+                  <Trophy className="w-5 h-5 mr-1 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,1)]" />
+                  <span className="mr-2 text-white/90">Winning</span>
+                  <span className="ml-auto text-xs md:text-sm font-semibold
+                    text-white bg-primary/50 rounded px-2 py-0.5 shadow shadow-primary/50 drop-shadow-[0_0_10px_rgba(167,139,250,0.8)]">
+                    {totalRewardsBone.toFixed(2)} BONE
+                  </span>
+                </span>
+              </Button>
+            </div>
+          </nav>
+        </div>
+      </div>
     </header>
-  );
-}
-
-function Logo() {
-  return (
-    <DynamicContainer className="w-full h-full flex items-center justify-center">
-      <DynamicTitle className="">
-        <Image
-          src="/images/shibplay-logo.png"
-          alt="ShibPlay"
-          width={256}
-          height={256}
-          className="aspect-square"
-        />
-      </DynamicTitle>
-      <DynamicDescription className="text-md font-bold w-full text-white uppercase flex items-center justify-end px-4">
-        Shib<span className="text-primary">Play</span>
-      </DynamicDescription>
-    </DynamicContainer>
-  );
-}
-
-function Loading() {
-  return (
-    <DynamicContainer className="w-full h-full flex items-center justify-center">
-      <DynamicTitle className="text-md font-bold w-full text-primary uppercase flex items-center justify-between px-4">
-        <Loader className="size-6 animate-spin" />
-      </DynamicTitle>
-      <DynamicDescription className="text-md font-bold w-full text-white uppercase flex items-center justify-between px-4">
-        Loading...
-      </DynamicDescription>
-    </DynamicContainer>
-  );
-}
-
-function Win() {
-  return (
-    <DynamicContainer className="w-full h-full flex items-center justify-center">
-      <DynamicTitle className="text-md font-bold w-full text-white uppercase flex items-center justify-between px-4">
-        <Gamepad className="size-6" />
-      </DynamicTitle>
-    </DynamicContainer>
-  );
-}
-
-function Lose() {
-  return (
-    <DynamicContainer className="w-full h-full flex items-center justify-center">
-      <DynamicTitle className="text-md font-bold w-full text-white uppercase flex items-center justify-between px-4">
-        <Gamepad className="size-6" />
-      </DynamicTitle>
-    </DynamicContainer>
-  );
-}
-
-function Tutorial() {
-  return (
-    <DynamicContainer className="w-full h-full flex items-center justify-center">
-      <DynamicTitle className="text-md font-bold w-full text-white uppercase flex items-center justify-between px-4">
-        <Gamepad className="size-6" />
-      </DynamicTitle>
-    </DynamicContainer>
   );
 }

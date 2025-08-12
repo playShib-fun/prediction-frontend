@@ -276,7 +276,6 @@ const QUERIES = {
         roundId
         startTimeStamp
         users
-        exitTimeStamp
         bearAmount
         bullAmount
         status
@@ -286,9 +285,8 @@ const QUERIES = {
   `,
 
   GET_ROUND_BY_ID: `
-    query GetRoundById($id: String!) {
+    query GetRoundById($id: BigInt!) {
       rounds(where: { roundId_eq: $id }, limit: 1) {
-        exitTimeStamp
         id
         pricePool
         roundId

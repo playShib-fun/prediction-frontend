@@ -12,6 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatUnits } from "viem";
 import Loading from "@/components/shibplay/loading";
 import HistoryCard from "@/components/shibplay/history-card";
 import HistoryFilters, {
@@ -215,7 +216,13 @@ export default function History() {
               bet={{
                 roundId: bet.roundId,
                 type: bet.type as "bull" | "bear",
-                amount: bet.amount,
+                  amount: (() => {
+                    try {
+                      return formatUnits(BigInt(bet.amount), 18);
+                    } catch {
+                      return "0";
+                    }
+                  })(),
                 timestamp: bet.timestamp,
               }}
               roundStatus={

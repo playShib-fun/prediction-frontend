@@ -85,8 +85,6 @@ export interface Round {
   roundId: string;
   startTimeStamp: string;
   users: string;
-  exitTimeStamp: string;
-  // Newly added fields from rounds query
   bearAmount?: string;
   bullAmount?: string;
   status?: string;

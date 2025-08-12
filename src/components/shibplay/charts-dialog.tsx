@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import TradingViewWidget from "./trading-view-widget";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -16,6 +22,9 @@ export default function ChartsDialog({ children }: ChartsDialogProps) {
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="p-0 overflow-hidden bg-black/95 border border-gray-800 max-w-[100vw] w-full">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>TradingView Chart</DrawerTitle>
+        </DrawerHeader>
         <div className="relative w-full h-[70vh]">
           <AnimatePresence mode="wait">
             {isOpen && (

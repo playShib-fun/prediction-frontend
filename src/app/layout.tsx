@@ -48,8 +48,8 @@ if ('serviceWorker' in navigator) {
           disableTransitionOnChange
         >
           <Providers cookie={cookie}>
-            <section className="max-w-lg mx-auto min-h-screen flex flex-col justify-between items-center">
-              <Header />
+            <Header />
+            <section className="max-w-lg mx-auto min-h-screen flex flex-col justify-between items-center pt-16">
               {children}
               <Footer />
             </section>
