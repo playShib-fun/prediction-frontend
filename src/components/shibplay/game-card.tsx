@@ -1,10 +1,7 @@
 "use client";
 
 import {
-  ArrowDown,
-  ArrowUp,
   ChartArea,
-  ChartLine,
   CheckCircle,
   ChevronsDown,
   ChevronsUp,
@@ -30,7 +27,6 @@ import { Progress } from "../ui/progress";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ShineBorder } from "../magicui/shine-border";
-import { TextAnimate } from "../magicui/text-animate";
 import { motion } from "motion/react";
 import NeumorphButton from "../ui/neumorph-button";
 import {
@@ -40,10 +36,7 @@ import {
   useStartRounds,
   useRound,
 } from "@/hooks/use-prediction-data";
-import {
-  useFormattedCurrentPrice,
-  useFormattedPriceByRoundId,
-} from "@/hooks/use-bone-price";
+import { useFormattedPriceByRoundId } from "@/hooks/use-bone-price";
 import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
@@ -83,9 +76,7 @@ export default function GameCard({
   );
   const [bearOdds, setBearOdds] = useState(1);
   const [bullOdds, setBullOdds] = useState(1);
-  // refetch every 5 seconds
-  const { data: currentPrice, refetch: refetchCurrentPrice } =
-    useFormattedCurrentPrice();
+  // current price removed from card UI
 
   // find the next-round epoch if this round has ended and then pull the round price for it's epoch
   const { data: finalPrice } = useFormattedPriceByRoundId(
@@ -99,12 +90,7 @@ export default function GameCard({
   const [isCalculatingRewards, setIsCalculatingRewards] = useState(false);
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchCurrentPrice();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // removed periodic refetch for current price
 
   const totalPoolBone = useMemo(() => {
     const bear = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
@@ -315,53 +301,6 @@ export default function GameCard({
           </div>
         )}
         <CardContent className="text-gray-500 flex flex-col items-start justify-between py-4 px-4 dark:bg-black/50 bg-white/50 rounded w-11/12 mx-auto gap-4">
-          <div className="flex flex-col justify-between group">
-            <div className="text-2xl text-primary z-0 font-black flex items-center gap-1">
-              <DollarSign className="w-6 h-6" />
-              <TextAnimate animation="slideLeft" by="character">
-                {priceByRoundId ? priceByRoundId.price.toFixed(4) : "-"}
-              </TextAnimate>
-            </div>
-            <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
-              <Coins className="w-4 h-4" />
-              Entry
-            </h2>
-          </div>
-          {state !== "ended" && (
-            <div className="flex flex-col justify-between group w-full">
-              <div
-                className={`text-2xl font-black ${
-                  priceByRoundId &&
-                  currentPrice &&
-                  priceByRoundId.price > currentPrice
-                    ? "text-red-500"
-                    : "text-green-500"
-                } flex items-center w-full`}
-              >
-                <DollarSign className="w-6 h-6" />
-
-                <TextAnimate animation="slideLeft" by="character">
-                  {currentPrice ? currentPrice.toFixed(4) : "-"}
-                </TextAnimate>
-                <div className="flex-1 w-full h-4"></div>
-                {priceByRoundId &&
-                currentPrice &&
-                priceByRoundId.price < currentPrice ? (
-                  <div className="text-green-500 text-sm animate-bounce">
-                    <ArrowUp className="w-6 h-6" />
-                  </div>
-                ) : (
-                  <div className="text-red-500 text-sm animate-bounce">
-                    <ArrowDown className="w-6 h-6" />
-                  </div>
-                )}
-              </div>
-              <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
-                <ChartLine className="w-4 h-4" />
-                Current
-              </h2>
-            </div>
-          )}
           {state === "ended" && (
             <div className="flex flex-col justify-between group">
               <p
@@ -454,6 +393,22 @@ export default function GameCard({
                 <span className="text-lg font-bold">Lower</span>
               </NeumorphButton>
             </PlacePredictionModal>
+          </CardFooter>
+        )}
+        {state === "upcoming" && !betPlaced && (
+          <CardFooter className="flex items-center justify-between -mt-2">
+            {/* Higher (Bull) odds on the left to match button order */}
+            <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
+              <p className="text-lg font-bold font-mono">
+                {bullOdds.toFixed(2)}x
+              </p>
+            </div>
+            {/* Lower (Bear) odds on the right */}
+            <div className="px-2 py-1 rounded-r-xs w-full flex-1 bg-red-700/25 text-red-500 flex items-center justify-center">
+              <p className="text-lg font-bold font-mono">
+                {bearOdds.toFixed(2)}x
+              </p>
+            </div>
           </CardFooter>
         )}
         {state === "upcoming" && betPlaced && (

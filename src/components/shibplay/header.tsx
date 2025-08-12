@@ -10,6 +10,7 @@ import { useRounds } from "@/hooks/use-prediction-data";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import ChartsDialog from "@/components/shibplay/charts-dialog";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import FiveMinuteTimer from "@/components/shibplay/five-minute-timer";
 
 export default function Header() {
   const { data: rounds } = useRounds();
@@ -57,6 +58,11 @@ export default function Header() {
               Shib<span className="text-primary">Play</span>
             </span>
           </Link>
+
+          {/* Center: Global timer */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <FiveMinuteTimer />
+          </div>
 
           {/* Right: Actions (mobile connect + desktop actions) */}
           {!isLarge && (
