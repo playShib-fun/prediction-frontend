@@ -2,14 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, Info } from "lucide-react";
+import { Trophy, Info, Home, LineChart, Wallet, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { useEffect, useMemo, useState } from "react";
 import { useRounds } from "@/hooks/use-prediction-data";
+import { useWalletActions, useWalletConnection } from "@/hooks/use-wallet";
+import ChartsDialog from "@/components/shibplay/charts-dialog";
 
 export default function Header() {
   const { data: rounds } = useRounds();
+  const { isConnected } = useWalletConnection();
+  const { connect, disconnect, connectors } = useWalletActions();
   const [isLarge, setIsLarge] = useState(false);
 
   useEffect(() => {
@@ -101,8 +105,9 @@ export default function Header() {
     {/* Bottom action bar (mobile + tablet) - placed outside header to avoid iOS fixed issues */}
     {!isLarge && (
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[250] backdrop-blur bg-black/70 border-t border-white/10 shadow-2xl pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="grid grid-cols-2 gap-3">
+        {/* Primary actions: How it works + Winning */}
+        <div className="max-w-7xl mx-auto px-4 pt-2">
+          <div className="grid grid-cols-2 gap-3 mb-2">
             <Link href="/how-to-play" target="_blank" rel="noopener noreferrer">
               <div className="relative">
                 <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
@@ -133,6 +138,35 @@ export default function Header() {
                 </span>
               </Button>
             </div>
+          </div>
+          {/* Secondary bottom nav: Home, History, Connect, Charts */}
+          <div className="grid grid-cols-4 gap-2 pb-3">
+            <Link href="/">
+              <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
+                <Home className="w-5 h-5" />
+                <span className="sr-only">Home</span>
+              </Button>
+            </Link>
+            <Link href="/history">
+              <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
+                <History className="w-5 h-5" />
+                <span className="sr-only">History</span>
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              className="w-full text-gray-300 hover:text-white"
+              onClick={() => (!isConnected ? connect({ connector: connectors[0] }) : disconnect())}
+            >
+              <Wallet className="w-5 h-5" />
+              <span className="sr-only">{isConnected ? "Disconnect" : "Connect"}</span>
+            </Button>
+            <ChartsDialog>
+              <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
+                <LineChart className="w-5 h-5" />
+                <span className="sr-only">Charts</span>
+              </Button>
+            </ChartsDialog>
           </div>
         </div>
       </div>
