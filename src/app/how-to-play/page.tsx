@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useMemo, useState } from "react";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { GameMechanicsCard } from "@/components/shibplay/game-mechanics-card";
+import { Input } from "@/components/ui/input";
 
 const steps = [
   {
@@ -227,6 +229,31 @@ const faqCategories = [
 ];
 
 export default function HowToPlay() {
+  const [faqSearch, setFaqSearch] = useState("");
+  const [copied, setCopied] = useState(false);
+  const contractAddress = "0xEfC9743D7e1b84D413647385EC9Ff42Cd9b10119";
+  const shouldReduceMotion = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const filteredFaqCategories = useMemo(() => {
+    const term = faqSearch.trim().toLowerCase();
+    if (!term) return faqCategories;
+    return faqCategories
+      .map((cat) => ({
+        ...cat,
+        questions: cat.questions.filter((q) =>
+          q.question.toLowerCase().includes(term) || q.answer.toLowerCase().includes(term)
+        ),
+      }))
+      .filter((cat) => cat.questions.length > 0);
+  }, [faqSearch]);
+
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(contractAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Enhanced Hero Section */}
@@ -237,8 +264,8 @@ export default function HowToPlay() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-28 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={shouldReduceMotion ? undefined : { duration: 1, ease: "easeOut" }}
             className="text-center max-w-5xl mx-auto"
           >
             {/* Main Title with Gradient Effect */}
@@ -281,8 +308,8 @@ export default function HowToPlay() {
             {/* Floating Achievement Badges */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
+              animate={shouldReduceMotion ? undefined : { opacity: 1, scale: 1 }}
+              transition={shouldReduceMotion ? undefined : { duration: 0.8, delay: 1.2 }}
               className="flex flex-wrap justify-center gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-8 sm:mb-10 md:mb-12 lg:mb-16 px-4 sm:px-6"
             >
               <motion.div
@@ -331,8 +358,8 @@ export default function HowToPlay() {
             {/* Achievement Stats */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.4 }}
+              animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={shouldReduceMotion ? undefined : { duration: 0.8, delay: 1.4 }}
               className="grid grid-cols-1 xs:grid-cols-3 gap-3 xs:gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto px-4 sm:px-6"
             >
               <div className="text-center group">
@@ -1110,23 +1137,35 @@ export default function HowToPlay() {
                     </p>
                     <div className="flex flex-col gap-4 sm:gap-5">
                       <code className="bg-background px-4 xs:px-5 sm:px-6 py-4 xs:py-5 sm:py-6 rounded-xl text-xs xs:text-sm sm:text-base font-mono border break-all w-full min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] flex items-center justify-center text-center leading-relaxed">
-                        0xEfC9743D7e1b84D413647385EC9Ff42Cd9b10119
+                        {contractAddress}
                       </code>
-                      <Button
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={handleCopyAddress}
+                          className="w-full sm:w-auto"
+                          aria-live="polite"
+                          aria-label="Copy contract address"
+                        >
+                          {copied ? "Copied!" : "Copy Address"}
+                        </Button>
+                        <Button
                         variant="outline"
                         size="lg"
                         asChild
-                        className="w-full touch-manipulation min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] px-6 xs:px-7 sm:px-8 text-base xs:text-lg sm:text-xl font-semibold rounded-xl"
+                        className="w-full sm:w-auto touch-manipulation min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] px-6 xs:px-7 sm:px-8 text-base xs:text-lg sm:text-xl font-semibold rounded-xl"
                       >
                         <Link
-                          href="https://puppyscan.shib.io/address/0xEfC9743D7e1b84D413647385EC9Ff42Cd9b10119"
+                          href={`https://puppyscan.shib.io/address/${contractAddress}`}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           <ExternalLink className="w-5 h-5 xs:w-6 xs:h-6 mr-3 xs:mr-4 flex-shrink-0" />
                           View on Explorer
                         </Link>
-                      </Button>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -2072,11 +2111,24 @@ export default function HowToPlay() {
                 Your burning questions answered by the prediction masters! Get
                 ready to become unstoppable! 🧠💡
               </p>
+              {/* FAQ Search */}
+              <div className="max-w-xl mx-auto mt-6">
+                <Input
+                  placeholder="Search FAQ (e.g., payout, wallet, claim)"
+                  value={faqSearch}
+                  onChange={(e) => setFaqSearch(e.target.value)}
+                  className="bg-muted/40"
+                  aria-label="Search FAQ"
+                />
+              </div>
             </motion.div>
 
-            {/* FAQ Categories */}
+            {/* FAQ Categories with search filter */}
             <div className="grid gap-8 xs:gap-9 sm:gap-10 md:gap-12 lg:gap-14 px-4 sm:px-6">
-              {faqCategories.map((category, categoryIndex) => (
+              {filteredFaqCategories.length === 0 && (
+                <div className="text-center text-muted-foreground">No questions match your search.</div>
+              )}
+              {filteredFaqCategories.map((category, categoryIndex) => (
                 <motion.div
                   key={category.id}
                   initial={{ opacity: 0, y: 30 }}

@@ -62,15 +62,23 @@ export default function HistoryControls({ filters, onFiltersChange, sort, onSort
             else if (key === "betType") next.betType = "all";
             else if (key === "outcome") next.outcome = "all";
             onFiltersChange(next);
+            // Ensure debounced search state also clears when removing search chip
+            if (key === "search" && onSearchChange) {
+              onSearchChange("");
+            }
           }}
-          onClearAll={() => onFiltersChange({
-            outcome: "all",
-            betType: "all",
-            roundStatus: "all",
-            dateRange: { preset: "all" },
-            amountRange: {},
-            search: "",
-          })}
+          onClearAll={() => {
+            onFiltersChange({
+              outcome: "all",
+              betType: "all",
+              roundStatus: "all",
+              dateRange: { preset: "all" },
+              amountRange: {},
+              search: "",
+            });
+            // Also clear debounced search value so results reset correctly
+            if (onSearchChange) onSearchChange("");
+          }}
         />
         <div className="text-sm text-gray-400 ml-auto">{totalResults} results</div>
       </div>

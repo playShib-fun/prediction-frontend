@@ -22,7 +22,7 @@ import { useHistoryStats } from "@/hooks/use-history-stats";
 import { useHistoryFilters, useHistorySearch } from "@/hooks/use-history-filters";
 // Utilities are used internally by hooks
 import type { BetRecord } from "@/lib/history-types";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useInfiniteScroll, useVirtualInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { StatisticsCalculator } from "@/lib/history-statistics";
 
 export default function History() {
@@ -32,7 +32,8 @@ export default function History() {
   const { filters, setFilters, sort, setSort, filteredData } = useHistoryFilters(allProcessedBets, {
     validateOnChange: true,
   });
-  const { setSearchTerm, searchResults } = useHistorySearch(filteredData, 300);
+  // Debounce occurs in controls (300ms). Avoid double-debouncing here.
+  const { setSearchTerm, searchResults } = useHistorySearch(filteredData, 0);
 
   const {
     data: claims,
@@ -158,7 +159,7 @@ export default function History() {
     setIsLoadingMore(false);
   };
 
-  const { triggerRef } = useInfiniteScroll(loadMore, { threshold: 200, hasMore, isLoading: isLoadingMore });
+  const { triggerRef, error: loadError, retry: retryLoad } = useInfiniteScroll(loadMore, { threshold: 200, hasMore, isLoading: isLoadingMore });
 
   // Reset pagination on filters/sort/search change
   useEffect(() => {
@@ -242,7 +243,7 @@ export default function History() {
       {/* Filter panel (drawer/modal/sidebar) */}
       <FilterPanel filters={filters} onChange={(f) => setFilters(f)} />
 
-      {/* Results with infinite scroll */}
+      {/* Results with infinite scroll and virtualization for large lists */}
       <div className="grid gap-4">
         {paginatedResults.length === 0 ? (
           <div className="text-center py-12">
@@ -254,11 +255,42 @@ export default function History() {
               You haven&apos;t placed any bets yet.
             </p>
           </div>
+        ) : paginatedResults.length > 100 ? (
+          (() => {
+            const virtual = useVirtualInfiniteScroll(
+              paginatedResults,
+              128,
+              720,
+              loadMore,
+              { threshold: 200, hasMore, isLoading: isLoadingMore, overscan: 6 }
+            );
+            return (
+              <div ref={virtual.containerRef as any} style={{ height: 720, overflow: 'auto', position: 'relative' }} className="rounded-xl border border-gray-800/50">
+                <div style={{ position: 'relative', height: virtual.totalHeight }}>
+                  {virtual.visibleItems.map(({ item: bet, index, style }) => (
+                    <div key={`${bet.roundId}-${bet.type}-${bet.timestamp}`} style={style}>
+                      <HistoryCard
+                        bet={{ roundId: bet.roundId, type: bet.type, amount: (() => { try { return formatUnits(BigInt(bet.amount), 18); } catch { return "0"; } })(), timestamp: bet.timestamp, transactionHash: bet.transactionHash }}
+                        roundStatus={bet.status === 'won' || bet.status === 'lost' ? 'ended' : bet.status === 'calculating' ? 'calculating' : 'running'}
+                        index={index}
+                        isClaimed={bet.status === 'won'}
+                        profitLoss={bet.profit}
+                        searchTerm={filters.search}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="py-3 text-center text-gray-400">
+                  {isLoadingMore ? "Loading more..." : hasMore ? (loadError ? <button onClick={() => retryLoad()} className="text-red-400 underline">Failed to load. Tap to retry.</button> : "Scroll for more") : "End of results"}
+                </div>
+              </div>
+            );
+          })()
         ) : (
           paginatedResults.map((bet, index) => (
             <HistoryCard
               key={`${bet.roundId}-${bet.type}-${bet.timestamp}`}
-              bet={{ roundId: bet.roundId, type: bet.type, amount: (() => { try { return formatUnits(BigInt(bet.amount), 18); } catch { return "0"; } })(), timestamp: bet.timestamp }}
+              bet={{ roundId: bet.roundId, type: bet.type, amount: (() => { try { return formatUnits(BigInt(bet.amount), 18); } catch { return "0"; } })(), timestamp: bet.timestamp, transactionHash: bet.transactionHash }}
               roundStatus={bet.status === 'won' || bet.status === 'lost' ? 'ended' : bet.status === 'calculating' ? 'calculating' : 'running'}
               index={index}
               isClaimed={bet.status === 'won'}
@@ -268,13 +300,19 @@ export default function History() {
           ))
         )}
 
-        {/* Infinite scroll trigger and states */}
-        {hasMore ? (
-          <div ref={triggerRef as any} className="h-8 flex items-center justify-center text-gray-400">
-            {isLoadingMore ? "Loading more..." : "Scroll to load more"}
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 py-4">End of results</div>
+        {/* Infinite scroll trigger and states for non-virtualized path */}
+        {paginatedResults.length <= 100 && (
+          hasMore ? (
+            <div ref={triggerRef as any} className="h-12 flex items-center justify-center text-gray-400">
+              {isLoadingMore ? "Loading more..." : loadError ? (
+                <button onClick={() => retryLoad()} className="text-red-400 underline">Failed to load. Tap to retry.</button>
+              ) : (
+                "Scroll to load more"
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-4">End of results</div>
+          )
         )}
       </div>
     </div>

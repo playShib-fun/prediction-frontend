@@ -25,6 +25,7 @@ interface HistoryCardProps {
     type: "bull" | "bear";
     amount: string;
     timestamp: string;
+    transactionHash?: string;
   };
   roundStatus: "calculating" | "running" | "upcoming" | "ended";
   index: number;
@@ -342,6 +343,15 @@ export default function HistoryCard({
           <CardFooter className="px-4 pb-4 pt-0">
             <div className={`text-sm font-medium ${parseFloat(profitLoss) >= 0 ? "text-green-400" : "text-red-400"}`}>
               P/L {parseFloat(profitLoss) >= 0 ? "+" : ""}{Number(profitLoss).toFixed(2)} BONE
+            </div>
+          </CardFooter>
+        )}
+
+        {/* Show tx hash with search highlighting when available */}
+        {bet.transactionHash && (
+          <CardFooter className="px-4 pt-2">
+            <div className="text-xs text-gray-400 truncate">
+              tx: {highlightText(bet.transactionHash, searchTerm)}
             </div>
           </CardFooter>
         )}
