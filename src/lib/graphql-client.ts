@@ -89,6 +89,9 @@ export interface Round {
   bullAmount?: string;
   status?: string;
   updateTimeStamp?: string;
+  endPrice?: string;
+  lockPrice?: string;
+  oracleRoundInd?: string;
 }
 
 // Query types

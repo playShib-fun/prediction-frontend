@@ -19,12 +19,13 @@ export default function BoneLoadingState({
   animation = "bone",
   textClassName,
 }: BoneLoadingStateProps) {
-  const sizeClasses = {
-    sm: "size-32",
-    md: "size-48",
-    lg: "size-64",
-    xl: "size-96",
-  };
+  // Use responsive width that scales with parent (card) while preserving a sensible max size
+  const sizeMaxWidthClasses = {
+    sm: "max-w-32",
+    md: "max-w-48",
+    lg: "max-w-64",
+    xl: "max-w-96",
+  } as const;
 
   const animationData = {
     bone: boneLoading,
@@ -34,12 +35,14 @@ export default function BoneLoadingState({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 p-6">
-      <Lottie
-        animationData={animationData[animation]}
-        loop={true}
-        className={sizeClasses[size]}
-      />
+    <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-6">
+      <div className="w-full flex items-center justify-center">
+        <Lottie
+          animationData={animationData[animation]}
+          loop={true}
+          className={`w-[65%] md:w-[60%] h-auto ${sizeMaxWidthClasses[size]}`}
+        />
+      </div>
       <p className={`text-center text-gray-100 font-semibold text-xl ${textClassName || ""}`}>
         {text}
       </p>
