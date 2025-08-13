@@ -59,11 +59,6 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Center: Global timer */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <FiveMinuteTimer />
-          </div>
-
           {/* Right: Actions (mobile connect + desktop actions) */}
           {!isLarge && (
             <ConnectButton.Custom>
@@ -84,7 +79,7 @@ export default function Header() {
           {/* Desktop actions */}
           {isLarge && (
           <nav className="hidden lg:flex items-center gap-3 sm:gap-4">
-            <Link href="/how-to-play" target="_blank" rel="noopener noreferrer">
+            <Link href="#" target="_blank" rel="noopener noreferrer">
               <div className="relative">
                 <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
                 <Button
@@ -132,7 +127,7 @@ export default function Header() {
         {/* Primary actions: How it works + Winning */}
         <div className="max-w-7xl mx-auto px-4 pt-2">
           <div className="grid grid-cols-2 gap-3 mb-2">
-            <Link href="/how-to-play" target="_blank" rel="noopener noreferrer">
+            <Link href="#" target="_blank" rel="noopener noreferrer">
               <div className="relative">
                 <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} className="rounded-lg" />
                 <Button

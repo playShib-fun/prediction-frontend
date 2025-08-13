@@ -213,6 +213,8 @@ const QUERIES = {
     }
   `,
 
+
+
   // Combined queries for efficiency
   GET_ALL_ROUNDS_DATA: `
     query GetAllRoundsData {
@@ -287,15 +289,18 @@ const QUERIES = {
   GET_ROUND_BY_ID: `
     query GetRoundById($id: BigInt!) {
       rounds(where: { roundId_eq: $id }, limit: 1) {
+        bearAmount
+        bullAmount
+        endPrice
         id
+        lockPrice
+        oracleRoundInd
         pricePool
         roundId
         startTimeStamp
-        users
-        bearAmount
-        bullAmount
         status
         updateTimeStamp
+        users
       }
     }
   `,

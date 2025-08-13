@@ -11,7 +11,6 @@ import { StarsBackground } from "@/components/shibplay/stars-background";
 
 // Ensure a singleton QueryClient to prevent multiple listeners during HMR
 declare global {
-  // eslint-disable-next-line no-var
   var __shibplay_query_client: QueryClient | undefined;
 }
 

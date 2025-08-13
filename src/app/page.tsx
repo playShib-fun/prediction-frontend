@@ -110,6 +110,7 @@ export default function Home() {
             setApi={setApi}
           >
             <CarouselContent className="overflow-x-visible">
+              {/* Insert an extra placeholder card called "Later" after Next */}
               {startRounds?.reverse().map((round, index) => (
                 <CarouselItem
                   key={`round-${round.epoch}`}
@@ -123,9 +124,28 @@ export default function Home() {
                     roundId={Number(round.epoch)}
                     state={returnGameState(round.epoch)}
                     active={selected === index}
+                    stateLabelOverride={returnGameState(round.epoch) === "upcoming" ? "Next" : undefined}
                   />
                 </CarouselItem>
               ))}
+              {/* Later card (placeholder) */}
+              {startRounds && startRounds.length > 0 && (
+                <CarouselItem
+                  key={`round-later-${startRounds[0].epoch}`}
+                  className={`md:basis-1/4 lg:basis-2/3 transition-all duration-300 ease-in-out ${
+                    selected === (startRounds.length + 1)
+                      ? "opacity-100 scale-100"
+                      : "opacity-75 scale-75"
+                  }`}
+                >
+                  <GameCard
+                    roundId={Number(startRounds[0].epoch) + 1}
+                    state="upcoming"
+                    active={false}
+                    stateLabelOverride="Later"
+                  />
+                </CarouselItem>
+              )}
             </CarouselContent>
           </Carousel>
         )}

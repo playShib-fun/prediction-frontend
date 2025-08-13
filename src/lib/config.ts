@@ -34,7 +34,6 @@ const supportedChains: Chain[] = [shibarium, puppynet];
 // Ensure a single Wagmi/RainbowKit config instance across HMR to avoid
 // reinitializing WalletConnect Core multiple times.
 declare global {
-  // eslint-disable-next-line no-var
   var __shibplay_wagmi_config: ReturnType<typeof getDefaultConfig> | undefined;
 }
 
