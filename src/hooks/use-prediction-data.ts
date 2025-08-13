@@ -675,7 +675,7 @@ export const useBetsData = () => {
 
 // Utility hooks for common use cases
 export const useLatestRounds = (limit = 10) => {
-  return useStartRounds({ limit, sortBy: "epoch", ascending: false });
+  return useRounds({ limit, sortBy: "startTimeStamp", ascending: false });
 };
 
 export const useUserBets = (sender: string, limit = 50) => {
