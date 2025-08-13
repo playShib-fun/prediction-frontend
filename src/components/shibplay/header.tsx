@@ -10,7 +10,7 @@ import { useRounds } from "@/hooks/use-prediction-data";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import ChartsDialog from "@/components/shibplay/charts-dialog";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import FiveMinuteTimer from "@/components/shibplay/five-minute-timer";
+// import FiveMinuteTimer from "@/components/shibplay/five-minute-timer";
 
 export default function Header() {
   const { data: rounds } = useRounds();

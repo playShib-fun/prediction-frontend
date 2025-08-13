@@ -32,21 +32,17 @@ import NeumorphButton from "../ui/neumorph-button";
 import {
   useStartRounds,
   useRound,
-  useEndRound,
   useBetBears,
   useBetBulls,
   useClaims,
 } from "@/hooks/use-prediction-data";
-import {
-  useFormattedCurrentPrice,
-  useFormattedPriceByRoundId,
-} from "@/hooks/use-bone-price";
+import { useFormattedCurrentPrice } from "@/hooks/use-bone-price";
 import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import BoneLoadingState from "./bone-loading-state";
 import { useRoundDetails } from "@/hooks/use-prediction-data";
-import FiveMinuteTimer from "./five-minute-timer";
+// import FiveMinuteTimer from "./five-minute-timer";
 import AnimatedOdds from "./animated-odds";
 import useOddsAnimation from "@/hooks/use-odds-animation";
 import { useRealTimeOdds } from "@/hooks/use-real-time-odds";
@@ -80,9 +76,9 @@ export default function GameCard({
   const { data: betBulls, refetch: refetchBetBulls } = useBetBulls({
     roundId: roundId.toString(),
   });
-  const { data: priceByRoundId } = useFormattedPriceByRoundId(
-    roundId.toString()
-  );
+  // const { data: priceByRoundId } = useFormattedPriceByRoundId(
+  //   roundId.toString()
+  // );
   const [bearOdds, setBearOdds] = useState(1);
   const [bullOdds, setBullOdds] = useState(1);
 
@@ -129,7 +125,7 @@ export default function GameCard({
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get end round data for ended rounds
-  const { data: endRound } = useEndRound(roundId.toString());
+  // const { data: endRound } = useEndRound(roundId.toString());
 
   const { data: currentPrice, refetch: refetchCurrentPrice } =
     useFormattedCurrentPrice();

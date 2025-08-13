@@ -15,10 +15,10 @@ import { useEffect, useMemo, useState } from "react";
 import { formatUnits } from "viem";
 import Loading from "@/components/shibplay/loading";
 import HistoryCard from "@/components/shibplay/history-card";
-import StatisticsDashboard from "@/components/shibplay/statistics-dashboard";
-import FilterPanel from "@/components/shibplay/filter-panel";
-import HistoryControls from "@/components/shibplay/history-controls";
-import { useHistoryStats } from "@/hooks/use-history-stats";
+// import StatisticsDashboard from "@/components/shibplay/statistics-dashboard";
+// import FilterPanel from "@/components/shibplay/filter-panel";
+// import HistoryControls from "@/components/shibplay/history-controls";
+// import { useHistoryStats } from "@/hooks/use-history-stats";
 import {
   useHistoryFilters,
   useHistorySearch,
@@ -35,12 +35,12 @@ export default function History() {
   const { address } = useWalletConnection();
   // Enhanced filters and sort state
   const [allProcessedBets, setAllProcessedBets] = useState<BetRecord[]>([]);
-  const { filters, setFilters, sort, setSort, filteredData } =
+  const { filters, sort, filteredData } =
     useHistoryFilters(allProcessedBets, {
       validateOnChange: true,
     });
   // Debounce occurs in controls (300ms). Avoid double-debouncing here.
-  const { setSearchTerm, searchResults } = useHistorySearch(filteredData, 0);
+  const { searchResults } = useHistorySearch(filteredData, 0);
 
   const {
     data: claims,
@@ -155,10 +155,10 @@ export default function History() {
     setAllProcessedBets(betsWithStats);
   }, [betsWithStats]);
 
-  // Compute statistics for current filtered dataset
-  const statsHook = useHistoryStats(searchResults, {
-    recalculateOnDataChange: true,
-  });
+  // Compute statistics for current filtered dataset (currently unused in UI)
+  // const statsHook = useHistoryStats(searchResults, {
+  //   recalculateOnDataChange: true,
+  // });
 
   // Pagination with infinite scroll
   const PAGE_SIZE = 20;
@@ -178,6 +178,16 @@ export default function History() {
     setPage((p) => p + 1);
     setIsLoadingMore(false);
   };
+
+  // Always initialize virtualized infinite scroll hook at the top level
+  // Even if we don't render the virtualized list, calling hooks unconditionally is required
+  const virtual = useVirtualInfiniteScroll(
+    paginatedResults,
+    128,
+    720,
+    loadMore,
+    { threshold: 200, hasMore, isLoading: isLoadingMore, overscan: 6 }
+  );
 
   const {
     triggerRef,
@@ -294,78 +304,62 @@ export default function History() {
             </p>
           </div>
         ) : paginatedResults.length > 100 ? (
-          (() => {
-            const virtual = useVirtualInfiniteScroll(
-              paginatedResults,
-              128,
-              720,
-              loadMore,
-              { threshold: 200, hasMore, isLoading: isLoadingMore, overscan: 6 }
-            );
-            return (
-              <div
-                ref={virtual.containerRef as any}
-                style={{ height: 720, overflow: "auto", position: "relative" }}
-                className="rounded-xl border border-gray-800/50"
-              >
+          <div
+            ref={virtual.containerRef as any}
+            style={{ height: 720, overflow: "auto", position: "relative" }}
+            className="rounded-xl border border-gray-800/50"
+          >
+            <div style={{ position: "relative", height: virtual.totalHeight }}>
+              {virtual.visibleItems.map(({ item: bet, index, style }) => (
                 <div
-                  style={{ position: "relative", height: virtual.totalHeight }}
+                  key={`${bet.roundId}-${bet.type}-${bet.timestamp}`}
+                  style={style}
                 >
-                  {virtual.visibleItems.map(({ item: bet, index, style }) => (
-                    <div
-                      key={`${bet.roundId}-${bet.type}-${bet.timestamp}`}
-                      style={style}
-                    >
-                      <HistoryCard
-                        bet={{
-                          roundId: bet.roundId,
-                          type: bet.type,
-                          amount: (() => {
-                            try {
-                              return formatUnits(BigInt(bet.amount), 18);
-                            } catch {
-                              return "0";
-                            }
-                          })(),
-                          timestamp: bet.timestamp,
-                          transactionHash: bet.transactionHash,
-                        }}
-                        roundStatus={
-                          bet.status === "won" || bet.status === "lost"
-                            ? "ended"
-                            : bet.status === "calculating"
-                            ? "calculating"
-                            : "running"
+                  <HistoryCard
+                    bet={{
+                      roundId: bet.roundId,
+                      type: bet.type,
+                      amount: (() => {
+                        try {
+                          return formatUnits(BigInt(bet.amount), 18);
+                        } catch {
+                          return "0";
                         }
-                        index={index}
-                        isClaimed={bet.status === "won"}
-                        profitLoss={bet.profit}
-                        searchTerm={filters.search}
-                      />
-                    </div>
-                  ))}
+                      })(),
+                      timestamp: bet.timestamp,
+                      transactionHash: bet.transactionHash,
+                    }}
+                    roundStatus={
+                      bet.status === "won" || bet.status === "lost"
+                        ? "ended"
+                        : bet.status === "calculating"
+                        ? "calculating"
+                        : "running"
+                    }
+                    index={index}
+                    isClaimed={bet.status === "won"}
+                    profitLoss={bet.profit}
+                    searchTerm={filters.search}
+                  />
                 </div>
-                <div className="py-3 text-center text-gray-400">
-                  {isLoadingMore ? (
-                    "Loading more..."
-                  ) : hasMore ? (
-                    loadError ? (
-                      <button
-                        onClick={() => retryLoad()}
-                        className="text-red-400 underline"
-                      >
-                        Failed to load. Tap to retry.
-                      </button>
-                    ) : (
-                      "Scroll for more"
-                    )
-                  ) : (
-                    "End of results"
-                  )}
-                </div>
-              </div>
-            );
-          })()
+              ))}
+            </div>
+            <div className="py-3 text-center text-gray-400">
+              {isLoadingMore ? (
+                "Loading more..."
+              ) : hasMore ? (
+                loadError ? (
+                  <button onClick={() => retryLoad()} className="text-red-400 underline">
+                    Failed to load. Tap to retry.
+                  </button>
+                ) : (
+                  "Scroll for more"
+                )
+              ) : (
+                "End of results"
+              )}
+            </div>
+          </div>
         ) : (
           paginatedResults.map((bet, index) => (
             <HistoryCard
