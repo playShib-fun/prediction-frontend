@@ -30,6 +30,8 @@ interface HistoryCardProps {
   index: number;
   isClaimed?: boolean; // Whether the user has already claimed rewards for this round
   activeFilter?: "all" | "winners" | "losers" | "calculating" | "running"; // Current filter state
+  profitLoss?: string; // Optional profit/loss display in BONE
+  searchTerm?: string; // Optional search term to highlight
 }
 
 export default function HistoryCard({
@@ -38,6 +40,8 @@ export default function HistoryCard({
   index,
   isClaimed = false,
   activeFilter = "all",
+  profitLoss,
+  searchTerm,
 }: HistoryCardProps) {
   const { address } = useWalletConnection();
 
@@ -305,7 +309,9 @@ export default function HistoryCard({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-500" />
-              <span className="text-gray-200">Round #{bet.roundId}</span>
+              <span className="text-gray-200">
+                Round #{highlightText(bet.roundId, searchTerm)}
+              </span>
             </div>
             <div
               className={`flex items-center gap-2 px-3 py-1 rounded-full ${
@@ -331,7 +337,31 @@ export default function HistoryCard({
         </CardHeader>
 
         {renderCardContent()}
+
+        {roundStatus === "ended" && profitLoss !== undefined && (
+          <CardFooter className="px-4 pb-4 pt-0">
+            <div className={`text-sm font-medium ${parseFloat(profitLoss) >= 0 ? "text-green-400" : "text-red-400"}`}>
+              P/L {parseFloat(profitLoss) >= 0 ? "+" : ""}{Number(profitLoss).toFixed(2)} BONE
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </motion.div>
+  );
+}
+
+function highlightText(text: string, term?: string) {
+  if (!term) return text;
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx === -1) return text;
+  const before = text.slice(0, idx);
+  const match = text.slice(idx, idx + term.length);
+  const after = text.slice(idx + term.length);
+  return (
+    <>
+      {before}
+      <mark className="bg-yellow-500/20 text-yellow-300 px-0.5 rounded-sm">{match}</mark>
+      {after}
+    </>
   );
 }

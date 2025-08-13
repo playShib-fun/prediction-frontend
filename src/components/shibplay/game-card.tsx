@@ -42,6 +42,9 @@ import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import BoneLoadingState from "./bone-loading-state";
 import { useRoundDetails } from "@/hooks/use-prediction-data";
+import AnimatedOdds from "./animated-odds";
+import useOddsAnimation from "@/hooks/use-odds-animation";
+import { useRealTimeOdds } from "@/hooks/use-real-time-odds";
 
 interface GameCardProps {
   roundId: number;
@@ -76,6 +79,31 @@ export default function GameCard({
   );
   const [bearOdds, setBearOdds] = useState(1);
   const [bullOdds, setBullOdds] = useState(1);
+  
+  // Real-time odds for upcoming rounds only
+  const {
+    odds: realTimeOdds,
+    error: realTimeError,
+    isAnimating: isRealTimeAnimating,
+    elementRef: realTimeElementRef,
+  } = useRealTimeOdds({
+    roundId: roundId.toString(),
+    enabled: state === "upcoming",
+    onOddsChange: (newOdds) => {
+      // Update local state when real-time odds change
+      setBearOdds(newOdds.bearOdds);
+      setBullOdds(newOdds.bullOdds);
+    },
+    enableVisibilityOptimization: true,
+  });
+  
+  // Use real-time odds for upcoming rounds, static for others
+  const currentBearOdds = state === "upcoming" ? realTimeOdds.bearOdds : bearOdds;
+  const currentBullOdds = state === "upcoming" ? realTimeOdds.bullOdds : bullOdds;
+  
+  // Animation hooks for odds
+  const bearOddsAnimation = useOddsAnimation(currentBearOdds, { threshold: 0.05 });
+  const bullOddsAnimation = useOddsAnimation(currentBullOdds, { threshold: 0.05 });
   // current price removed from card UI
 
   // find the next-round epoch if this round has ended and then pull the round price for it's epoch
@@ -99,7 +127,10 @@ export default function GameCard({
   }, [round]);
 
   function calculateOdds() {
-    if (isRoundLoading) return;
+    // Only calculate static odds for live and ended rounds
+    // Upcoming rounds use real-time odds
+    if (isRoundLoading || state === "upcoming") return;
+    
     const totalBearAmount = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
     const totalBullAmount = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
     const total = totalBearAmount + totalBullAmount;
@@ -112,7 +143,7 @@ export default function GameCard({
 
   useEffect(() => {
     calculateOdds();
-  }, [round, isRoundLoading]);
+  }, [round, isRoundLoading, state]);
 
   function getCurrentRound(): StartRound | null {
     if (isStartLoading) {
@@ -220,6 +251,7 @@ export default function GameCard({
 
   return (
     <motion.div
+      ref={realTimeElementRef as React.RefObject<HTMLDivElement>}
       className="w-[90%] md:w-full mx-auto"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -300,6 +332,15 @@ export default function GameCard({
             />
           </div>
         )}
+        {state === "upcoming" && realTimeError && (
+          <div className="absolute top-2 left-2 z-10">
+            <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-md px-2 py-1">
+              <p className="text-xs text-yellow-400">
+                Real-time odds unavailable
+              </p>
+            </div>
+          </div>
+        )}
         <CardContent className="text-gray-500 flex flex-col items-start justify-between py-4 px-4 dark:bg-black/50 bg-white/50 rounded w-11/12 mx-auto gap-4">
           {state === "ended" && (
             <div className="flex flex-col justify-between group">
@@ -357,8 +398,8 @@ export default function GameCard({
                 refetchRound();
               }}
               roundId={roundId}
-              bearOdds={bearOdds}
-              bullOdds={bullOdds}
+              bearOdds={currentBearOdds}
+              bullOdds={currentBullOdds}
               initialDirection="higher"
             >
               <NeumorphButton
@@ -379,8 +420,8 @@ export default function GameCard({
                 refetchRound();
               }}
               roundId={roundId}
-              bearOdds={bearOdds}
-              bullOdds={bullOdds}
+              bearOdds={currentBearOdds}
+              bullOdds={currentBullOdds}
               initialDirection="lower"
             >
               <NeumorphButton
@@ -398,17 +439,19 @@ export default function GameCard({
         {state === "upcoming" && !betPlaced && (
           <CardFooter className="flex items-center justify-between -mt-2">
             {/* Higher (Bull) odds on the left to match button order */}
-            <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
-              <p className="text-lg font-bold font-mono">
-                {bullOdds.toFixed(2)}x
-              </p>
-            </div>
+            <AnimatedOdds
+              value={currentBullOdds}
+              isAnimating={bullOddsAnimation.isAnimating || (state === "upcoming" && isRealTimeAnimating)}
+              direction={bullOddsAnimation.direction}
+              position="bull"
+            />
             {/* Lower (Bear) odds on the right */}
-            <div className="px-2 py-1 rounded-r-xs w-full flex-1 bg-red-700/25 text-red-500 flex items-center justify-center">
-              <p className="text-lg font-bold font-mono">
-                {bearOdds.toFixed(2)}x
-              </p>
-            </div>
+            <AnimatedOdds
+              value={currentBearOdds}
+              isAnimating={bearOddsAnimation.isAnimating || (state === "upcoming" && isRealTimeAnimating)}
+              direction={bearOddsAnimation.direction}
+              position="bear"
+            />
           </CardFooter>
         )}
         {state === "upcoming" && betPlaced && (
@@ -429,24 +472,28 @@ export default function GameCard({
           <>
             {/* Show final odds like live card */}
             <CardFooter className="flex items-center justify-between -mt-2">
-              <div
-                className={`px-2 py-1 rounded-l-xs w-full flex-1 ${
+              <AnimatedOdds
+                value={currentBearOdds}
+                isAnimating={bearOddsAnimation.isAnimating}
+                direction={bearOddsAnimation.direction}
+                position="bear"
+                className={
                   finalPrice && priceByRoundId && finalPrice.price < priceByRoundId.price
                     ? "bg-green-700/25 text-green-500"
                     : "bg-red-700/25 text-red-500"
-                } flex items-center justify-center`}
-              >
-                <p className="text-lg font-bold font-mono">{bearOdds.toFixed(2)}x</p>
-              </div>
-              <div
-                className={`px-2 py-1 rounded-r-xs w-full flex-1 ${
+                }
+              />
+              <AnimatedOdds
+                value={currentBullOdds}
+                isAnimating={bullOddsAnimation.isAnimating}
+                direction={bullOddsAnimation.direction}
+                position="bull"
+                className={
                   finalPrice && priceByRoundId && finalPrice.price > priceByRoundId.price
                     ? "bg-green-700/25 text-green-500"
                     : "bg-red-700/25 text-red-500"
-                } flex items-center justify-center`}
-              >
-                <p className="text-lg font-bold font-mono">{bullOdds.toFixed(2)}x</p>
-              </div>
+                }
+              />
             </CardFooter>
 
             {betPlaced && (
@@ -482,16 +529,18 @@ export default function GameCard({
         )}
         {state === "live" && (
           <CardFooter className="flex items-center justify-between -mt-2">
-            <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-red-700/25 text-red-500 flex items-center justify-center">
-              <p className="text-lg font-bold font-mono">
-                {bearOdds.toFixed(2)}x
-              </p>
-            </div>
-            <div className="px-2 py-1 rounded-r-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
-              <p className="text-lg font-bold font-mono">
-                {bullOdds.toFixed(2)}x
-              </p>
-            </div>
+            <AnimatedOdds
+              value={currentBearOdds}
+              isAnimating={bearOddsAnimation.isAnimating}
+              direction={bearOddsAnimation.direction}
+              position="bear"
+            />
+            <AnimatedOdds
+              value={currentBullOdds}
+              isAnimating={bullOddsAnimation.isAnimating}
+              direction={bullOddsAnimation.direction}
+              position="bull"
+            />
           </CardFooter>
         )}
       </Card>

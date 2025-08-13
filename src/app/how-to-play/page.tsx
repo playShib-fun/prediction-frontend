@@ -242,11 +242,11 @@ export default function HowToPlay() {
             className="text-center max-w-5xl mx-auto"
           >
             {/* Main Title with Gradient Effect */}
-            <div className="relative mb-4 sm:mb-6 md:mb-8">
+            <div className="relative mb-6 sm:mb-8 md:mb-10 lg:mb-12">
               <TextAnimate
                 animation="blurInUp"
                 by="word"
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight px-2"
+                className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold mb-3 sm:mb-4 md:mb-5 lg:mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-[1.1] xs:leading-[1.15] sm:leading-tight px-2 sm:px-4"
                 duration={0.8}
                 delay={0.2}
               >
@@ -255,7 +255,7 @@ export default function HowToPlay() {
               <TextAnimate
                 animation="slideUp"
                 by="word"
-                className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-semibold text-muted-foreground/80 px-2"
+                className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-semibold text-muted-foreground/80 px-2 sm:px-4 leading-relaxed"
                 duration={0.6}
                 delay={0.6}
               >
@@ -268,7 +268,7 @@ export default function HowToPlay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1 }}
-              className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-muted-foreground mb-6 sm:mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed px-4"
+              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-8 sm:mb-10 md:mb-12 lg:mb-16 max-w-4xl mx-auto leading-relaxed px-4 sm:px-6 text-center"
             >
               Transform your market intuition into epic wins! Every 5 minutes
               brings a new chance to prove your prediction prowess and
@@ -283,18 +283,18 @@ export default function HowToPlay() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 1.2 }}
-              className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-6 sm:mb-8 md:mb-12 px-4"
+              className="flex flex-wrap justify-center gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-8 sm:mb-10 md:mb-12 lg:mb-16 px-4 sm:px-6"
             >
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group"
+                className="group flex-shrink-0"
               >
                 <Badge
                   variant="secondary"
-                  className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-3 md:px-4 lg:px-6 py-1 sm:py-2 md:py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation"
+                  className="text-xs xs:text-sm sm:text-base md:text-lg px-3 xs:px-4 sm:px-5 md:px-6 py-2.5 xs:py-3 sm:py-3.5 md:py-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center whitespace-nowrap"
                 >
-                  <Play className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-1 sm:mr-2 text-green-600 group-hover:animate-pulse" />
+                  <Play className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 xs:mr-2 sm:mr-2.5 md:mr-3 text-green-600 group-hover:animate-pulse flex-shrink-0" />
                   <span className="font-semibold">Easy to Play</span>
                 </Badge>
               </motion.div>
@@ -302,13 +302,13 @@ export default function HowToPlay() {
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group"
+                className="group flex-shrink-0"
               >
                 <Badge
                   variant="secondary"
-                  className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-3 md:px-4 lg:px-6 py-1 sm:py-2 md:py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation"
+                  className="text-xs xs:text-sm sm:text-base md:text-lg px-3 xs:px-4 sm:px-5 md:px-6 py-2.5 xs:py-3 sm:py-3.5 md:py-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center whitespace-nowrap"
                 >
-                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-1 sm:mr-2 text-yellow-600 group-hover:animate-bounce" />
+                  <Zap className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 xs:mr-2 sm:mr-2.5 md:mr-3 text-yellow-600 group-hover:animate-bounce flex-shrink-0" />
                   <span className="font-semibold">Instant Rewards</span>
                 </Badge>
               </motion.div>
@@ -316,13 +316,13 @@ export default function HowToPlay() {
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group"
+                className="group flex-shrink-0"
               >
                 <Badge
                   variant="secondary"
-                  className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-3 md:px-4 lg:px-6 py-1 sm:py-2 md:py-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation"
+                  className="text-xs xs:text-sm sm:text-base md:text-lg px-3 xs:px-4 sm:px-5 md:px-6 py-2.5 xs:py-3 sm:py-3.5 md:py-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center whitespace-nowrap"
                 >
-                  <Shield className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-1 sm:mr-2 text-blue-600 group-hover:animate-pulse" />
+                  <Shield className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 xs:mr-2 sm:mr-2.5 md:mr-3 text-blue-600 group-hover:animate-pulse flex-shrink-0" />
                   <span className="font-semibold">100% Secure</span>
                 </Badge>
               </motion.div>
@@ -333,18 +333,18 @@ export default function HowToPlay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.4 }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-4xl mx-auto px-4"
+              className="grid grid-cols-1 xs:grid-cols-3 gap-3 xs:gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto px-4 sm:px-6"
             >
               <div className="text-center group">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation"
+                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 xs:p-5 sm:p-6 md:p-7 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation min-h-[100px] xs:min-h-[110px] sm:min-h-[120px] md:min-h-[130px] flex flex-col justify-center"
                 >
-                  <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2 group-hover:text-primary/80 transition-colors">
+                  <div className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 xs:mb-1.5 sm:mb-2 group-hover:text-primary/80 transition-colors leading-none">
                     5min
                   </div>
-                  <div className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium">
+                  <div className="text-xs xs:text-sm sm:text-base text-muted-foreground font-medium leading-tight">
                     Round Duration
                   </div>
                 </motion.div>
@@ -354,12 +354,12 @@ export default function HowToPlay() {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation"
+                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 xs:p-5 sm:p-6 md:p-7 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation min-h-[100px] xs:min-h-[110px] sm:min-h-[120px] md:min-h-[130px] flex flex-col justify-center"
                 >
-                  <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2 group-hover:text-primary/80 transition-colors">
+                  <div className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 xs:mb-1.5 sm:mb-2 group-hover:text-primary/80 transition-colors leading-none">
                     24/7
                   </div>
-                  <div className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium">
+                  <div className="text-xs xs:text-sm sm:text-base text-muted-foreground font-medium leading-tight">
                     Always Active
                   </div>
                 </motion.div>
@@ -369,12 +369,12 @@ export default function HowToPlay() {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation"
+                  className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 xs:p-5 sm:p-6 md:p-7 shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation min-h-[100px] xs:min-h-[110px] sm:min-h-[120px] md:min-h-[130px] flex flex-col justify-center"
                 >
-                  <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2 group-hover:text-primary/80 transition-colors">
+                  <div className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-1 xs:mb-1.5 sm:mb-2 group-hover:text-primary/80 transition-colors leading-none">
                     95%
                   </div>
-                  <div className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium">
+                  <div className="text-xs xs:text-sm sm:text-base text-muted-foreground font-medium leading-tight">
                     Payout Rate
                   </div>
                 </motion.div>
@@ -412,7 +412,7 @@ export default function HowToPlay() {
                   <Button
                     size="lg"
                     asChild
-                    className="text-base sm:text-lg md:text-xl px-6 sm:px-8 md:px-12 py-3 sm:py-4 md:py-6 bg-gradient-to-r from-primary via-primary to-purple-600 hover:from-primary/90 hover:via-primary/90 hover:to-purple-600/90 shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 relative overflow-hidden group touch-manipulation min-h-[44px] sm:min-h-[48px]"
+                    className="text-base xs:text-lg sm:text-xl md:text-2xl px-6 xs:px-8 sm:px-10 md:px-12 lg:px-14 py-4 xs:py-5 sm:py-6 md:py-7 bg-gradient-to-r from-primary via-primary to-purple-600 hover:from-primary/90 hover:via-primary/90 hover:to-purple-600/90 shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 relative overflow-hidden group touch-manipulation min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] md:min-h-[68px] rounded-2xl"
                   >
                     <Link href="/">
                       {/* Animated Shine Effect */}
@@ -434,16 +434,16 @@ export default function HowToPlay() {
                           repeat: Infinity,
                           ease: "linear",
                         }}
-                        className="mr-2 sm:mr-3"
+                        className="mr-2 xs:mr-2.5 sm:mr-3 md:mr-3.5"
                       >
-                        <Trophy className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                        <Trophy className="w-5 h-5 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                       </motion.div>
                       Start Your Journey
                       {/* Pulsing Arrow */}
                       <motion.div
                         animate={{ x: [0, 4, 0] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
-                        className="ml-1 sm:ml-2 md:ml-3"
+                        className="ml-2 xs:ml-2.5 sm:ml-3 md:ml-3.5"
                       >
                         →
                       </motion.div>
@@ -457,20 +457,20 @@ export default function HowToPlay() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 1.8 }}
-                className="mt-4 sm:mt-6 md:mt-8 max-w-md mx-auto px-4"
+                className="mt-6 sm:mt-8 md:mt-10 max-w-md mx-auto px-4"
               >
-                <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-3 sm:p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
+                <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 xs:p-5 sm:p-6 md:p-7 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 xs:mb-4 sm:mb-5">
+                    <span className="text-sm xs:text-base sm:text-lg font-semibold text-muted-foreground">
                       Readiness Level
                     </span>
-                    <span className="text-xs sm:text-sm font-bold text-primary">
+                    <span className="text-sm xs:text-base sm:text-lg font-bold text-primary">
                       Ready to Play!
                     </span>
                   </div>
 
                   <div className="relative">
-                    <div className="w-full bg-muted/50 rounded-full h-2 sm:h-2.5 md:h-3 overflow-hidden">
+                    <div className="w-full bg-muted/50 rounded-full h-3 xs:h-3.5 sm:h-4 md:h-5 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: "100%" }}
@@ -492,7 +492,7 @@ export default function HowToPlay() {
                     </div>
 
                     {/* Progress Checkpoints */}
-                    <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                    <div className="flex justify-between mt-3 xs:mt-4 text-xs xs:text-sm sm:text-base text-muted-foreground font-medium">
                       <span>Learned</span>
                       <span>Confident</span>
                       <span>Ready!</span>
@@ -508,22 +508,23 @@ export default function HowToPlay() {
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
         <Tabs defaultValue="overview" className="w-full max-w-6xl mx-auto">
-          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6 md:mb-8 h-10 sm:h-12 md:h-auto">
+          <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 md:mb-10 h-14 xs:h-16 sm:h-18 md:h-auto gap-1 xs:gap-2 p-1.5 xs:p-2 sm:p-2.5 rounded-2xl">
             <TabsTrigger
               value="overview"
-              className="text-xs sm:text-sm md:text-base py-1.5 sm:py-2 md:py-3 touch-manipulation"
+              className="text-sm xs:text-base sm:text-lg md:text-xl py-3 xs:py-3.5 sm:py-4 md:py-5 px-3 xs:px-4 sm:px-5 md:px-6 touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center font-semibold rounded-xl transition-all duration-300"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="tutorial"
-              className="text-xs sm:text-sm md:text-base py-1.5 sm:py-2 md:py-3 touch-manipulation"
+              className="text-sm xs:text-base sm:text-lg md:text-xl py-3 xs:py-3.5 sm:py-4 md:py-5 px-3 xs:px-4 sm:px-5 md:px-6 touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center font-semibold rounded-xl transition-all duration-300"
             >
-              Step-by-Step
+              <span className="hidden xs:inline">Step-by-Step</span>
+              <span className="xs:hidden">Tutorial</span>
             </TabsTrigger>
             <TabsTrigger
               value="faq"
-              className="text-xs sm:text-sm md:text-base py-1.5 sm:py-2 md:py-3 touch-manipulation"
+              className="text-sm xs:text-base sm:text-lg md:text-xl py-3 xs:py-3.5 sm:py-4 md:py-5 px-3 xs:px-4 sm:px-5 md:px-6 touch-manipulation min-h-[48px] xs:min-h-[52px] sm:min-h-[56px] flex items-center justify-center font-semibold rounded-xl transition-all duration-300"
             >
               FAQ
             </TabsTrigger>
@@ -713,7 +714,7 @@ export default function HowToPlay() {
               </Card>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
               {/* Enhanced Key Features */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -743,7 +744,7 @@ export default function HowToPlay() {
                     </p>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xs:gap-5 sm:gap-6 md:gap-7">
                       {features.map((feature, index) => (
                         <motion.div
                           key={index}
@@ -763,7 +764,7 @@ export default function HowToPlay() {
                           className="group relative"
                         >
                           <div
-                            className={`relative overflow-hidden rounded-xl border-2 ${feature.borderColor} bg-gradient-to-br ${feature.color} p-3 sm:p-4 md:p-6 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 touch-manipulation`}
+                            className={`relative overflow-hidden rounded-2xl border-2 ${feature.borderColor} bg-gradient-to-br ${feature.color} p-5 xs:p-6 sm:p-7 md:p-8 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 touch-manipulation min-h-[140px] xs:min-h-[150px] sm:min-h-[160px] md:min-h-[170px]`}
                           >
                             {/* Background Pattern */}
                             <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -783,7 +784,7 @@ export default function HowToPlay() {
                               className={`absolute inset-0 rounded-xl bg-gradient-to-r ${feature.color} blur-xl`}
                             />
 
-                            <div className="relative flex items-start gap-2 sm:gap-3 md:gap-5">
+                            <div className="relative flex flex-col sm:flex-row items-start gap-4 xs:gap-5 sm:gap-6">
                               {/* Enhanced Icon with Multiple Animations */}
                               <motion.div
                                 whileHover={{
@@ -804,7 +805,7 @@ export default function HowToPlay() {
                                   },
                                 }}
                                 whileTap={{ scale: 0.9 }}
-                                className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${feature.color} border ${feature.borderColor} shadow-lg group-hover:shadow-xl transition-all duration-300 touch-manipulation`}
+                                className={`relative flex items-center justify-center w-14 h-14 xs:w-16 xs:h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br ${feature.color} border ${feature.borderColor} shadow-lg group-hover:shadow-xl transition-all duration-300 touch-manipulation flex-shrink-0`}
                               >
                                 <motion.div
                                   animate={
@@ -865,10 +866,10 @@ export default function HowToPlay() {
                                     duration: 0.4,
                                     delay: index * 0.15 + 0.2,
                                   }}
-                                  className="mb-3"
+                                  className="mb-3 xs:mb-4"
                                 >
                                   <span
-                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${feature.bgColor} ${feature.iconColor} border ${feature.borderColor}`}
+                                    className={`inline-flex items-center px-3 xs:px-4 py-1.5 xs:py-2 rounded-full text-xs xs:text-sm font-semibold uppercase tracking-wider ${feature.bgColor} ${feature.iconColor} border ${feature.borderColor}`}
                                   >
                                     {feature.category}
                                   </span>
@@ -876,7 +877,7 @@ export default function HowToPlay() {
 
                                 {/* Title with Hover Effect */}
                                 <motion.h4
-                                  className="text-base sm:text-lg md:text-xl font-bold text-foreground mb-2 sm:mb-3 group-hover:text-primary transition-colors duration-300"
+                                  className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-3 xs:mb-4 sm:mb-5 group-hover:text-primary transition-colors duration-300 leading-tight"
                                   whileHover={{ x: 2 }}
                                 >
                                   {feature.title}
@@ -884,7 +885,7 @@ export default function HowToPlay() {
 
                                 {/* Description */}
                                 <motion.p
-                                  className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300"
+                                  className="text-sm xs:text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300"
                                   initial={{ opacity: 0.8 }}
                                   whileHover={{ opacity: 1 }}
                                 >
@@ -1107,22 +1108,22 @@ export default function HowToPlay() {
                         Verified Contract Address:
                       </strong>
                     </p>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3">
-                      <code className="bg-background px-3 py-2 rounded-md text-xs sm:text-sm font-mono border break-all w-full sm:w-auto">
+                    <div className="flex flex-col gap-4 sm:gap-5">
+                      <code className="bg-background px-4 xs:px-5 sm:px-6 py-4 xs:py-5 sm:py-6 rounded-xl text-xs xs:text-sm sm:text-base font-mono border break-all w-full min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] flex items-center justify-center text-center leading-relaxed">
                         0xEfC9743D7e1b84D413647385EC9Ff42Cd9b10119
                       </code>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="lg"
                         asChild
-                        className="w-full sm:w-auto touch-manipulation min-h-[44px]"
+                        className="w-full touch-manipulation min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] px-6 xs:px-7 sm:px-8 text-base xs:text-lg sm:text-xl font-semibold rounded-xl"
                       >
                         <Link
                           href="https://puppyscan.shib.io/address/0xEfC9743D7e1b84D413647385EC9Ff42Cd9b10119"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <ExternalLink className="w-4 h-4 mr-2" />
+                          <ExternalLink className="w-5 h-5 xs:w-6 xs:h-6 mr-3 xs:mr-4 flex-shrink-0" />
                           View on Explorer
                         </Link>
                       </Button>
@@ -1323,27 +1324,27 @@ export default function HowToPlay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-6 sm:mb-8 md:mb-12 px-4"
+              className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16 px-4 sm:px-6"
             >
-              <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold mb-2 xs:mb-3 sm:mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 xs:mb-5 sm:mb-6 md:mb-8 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent leading-tight">
                 Your Path to Mastery
               </h2>
-              <p className="text-sm xs:text-base sm:text-lg text-muted-foreground mb-4 xs:mb-6 sm:mb-8 max-w-2xl mx-auto">
+              <p className="text-base xs:text-lg sm:text-xl md:text-2xl text-muted-foreground mb-6 xs:mb-8 sm:mb-10 md:mb-12 max-w-3xl mx-auto leading-relaxed">
                 Conquer these legendary quests to ascend to prediction godhood!
                 🏆⚡
               </p>
 
               {/* Overall Progress Bar */}
-              <div className="max-w-md mx-auto">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs xs:text-sm font-medium text-muted-foreground">
+              <div className="max-w-lg mx-auto">
+                <div className="flex items-center justify-between mb-3 xs:mb-4">
+                  <span className="text-sm xs:text-base sm:text-lg font-semibold text-muted-foreground">
                     Progress
                   </span>
-                  <span className="text-xs xs:text-sm font-bold text-primary">
+                  <span className="text-sm xs:text-base sm:text-lg font-bold text-primary">
                     0 / {steps.length}
                   </span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2 xs:h-2.5 sm:h-3 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-3 xs:h-4 sm:h-5 md:h-6 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: "0%" }}
@@ -1355,7 +1356,7 @@ export default function HowToPlay() {
             </motion.div>
 
             {/* Achievement-Style Step Cards */}
-            <div className="space-y-3 xs:space-y-4 sm:space-y-6 px-4">
+            <div className="space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10 lg:space-y-12 px-4 sm:px-6">
               {steps.map((step, index) => (
                 <motion.div
                   key={index}
@@ -1374,9 +1375,9 @@ export default function HowToPlay() {
                   }}
                   className="group"
                 >
-                  <Card className="relative overflow-hidden border-2 border-muted hover:border-primary/30 transition-all duration-300 shadow-lg hover:shadow-xl">
+                  <Card className="relative overflow-hidden border-2 border-muted hover:border-primary/30 transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation rounded-2xl">
                     {/* Achievement Badge */}
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-5 xs:top-6 sm:top-7 right-5 xs:right-6 sm:right-7 z-10">
                       <motion.div
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
@@ -1386,17 +1387,17 @@ export default function HowToPlay() {
                           type: "spring",
                           stiffness: 200,
                         }}
-                        className="w-12 h-12 rounded-full bg-gradient-to-br from-muted to-muted/50 border-2 border-muted-foreground/20 flex items-center justify-center group-hover:from-primary/20 group-hover:to-primary/10 group-hover:border-primary/30 transition-all duration-300"
+                        className="w-14 h-14 xs:w-16 xs:h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-muted to-muted/50 border-2 border-muted-foreground/20 flex items-center justify-center group-hover:from-primary/20 group-hover:to-primary/10 group-hover:border-primary/30 transition-all duration-300 touch-manipulation"
                       >
-                        <div className="w-6 h-6 rounded-full bg-muted-foreground/20 group-hover:bg-primary/30 transition-all duration-300" />
+                        <div className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-full bg-muted-foreground/20 group-hover:bg-primary/30 transition-all duration-300" />
                       </motion.div>
                     </div>
 
                     {/* Background Gradient Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                    <CardHeader className="pb-2 xs:pb-3 sm:pb-4">
-                      <div className="flex items-start gap-3 xs:gap-4 sm:gap-6">
+                    <CardHeader className="pb-4 xs:pb-5 sm:pb-6 md:pb-7 px-5 xs:px-6 sm:px-7 md:px-8 pt-5 xs:pt-6 sm:pt-7 md:pt-8">
+                      <div className="flex items-start gap-5 xs:gap-6 sm:gap-7 md:gap-8">
                         {/* Enhanced Step Icon */}
                         <motion.div
                           initial={{ scale: 0, rotate: -90 }}
@@ -1413,7 +1414,7 @@ export default function HowToPlay() {
                             transition: { duration: 0.2 },
                           }}
                           whileTap={{ scale: 0.95 }}
-                          className={`relative flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br shadow-lg group-hover:shadow-xl transition-all duration-300 touch-manipulation ${
+                          className={`relative flex items-center justify-center w-16 h-16 xs:w-18 xs:h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-2xl bg-gradient-to-br shadow-lg group-hover:shadow-xl transition-all duration-300 touch-manipulation flex-shrink-0 ${
                             step.color === "text-blue-600"
                               ? "from-blue-500/20 to-blue-600/30 border border-blue-500/30"
                               : step.color === "text-green-600"
@@ -1426,7 +1427,7 @@ export default function HowToPlay() {
                           <div
                             className={`${step.color} group-hover:scale-110 transition-transform duration-200`}
                           >
-                            <div className="w-5 h-5 sm:w-6 sm:h-6">
+                            <div className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 md:w-10 md:h-10">
                               {step.icon}
                             </div>
                           </div>
@@ -1449,7 +1450,7 @@ export default function HowToPlay() {
 
                         <div className="flex-1 min-w-0">
                           {/* Step Number, Category Badge, and Title */}
-                          <div className="flex items-start gap-3 sm:gap-4 mb-3">
+                          <div className="flex items-start gap-4 xs:gap-5 sm:gap-6 mb-4 xs:mb-5 sm:mb-6">
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
@@ -1459,13 +1460,13 @@ export default function HowToPlay() {
                                 type: "spring",
                                 stiffness: 200,
                               }}
-                              className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 text-primary-foreground text-xs sm:text-sm font-bold shadow-lg flex-shrink-0"
+                              className="flex items-center justify-center w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r from-primary to-purple-600 text-primary-foreground text-base xs:text-lg sm:text-xl md:text-2xl font-bold shadow-lg flex-shrink-0 touch-manipulation"
                             >
                               {index + 1}
                             </motion.div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold group-hover:text-primary transition-colors duration-300">
+                              <div className="flex flex-col gap-3 xs:gap-4 mb-3 xs:mb-4">
+                                <CardTitle className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold group-hover:text-primary transition-colors duration-300 leading-tight">
                                   {step.title}
                                 </CardTitle>
                                 <motion.div
@@ -1478,7 +1479,7 @@ export default function HowToPlay() {
                                 >
                                   <Badge
                                     variant="secondary"
-                                    className={`text-xs font-medium px-2 py-1 ${
+                                    className={`text-sm xs:text-base font-semibold px-3 xs:px-4 py-2 xs:py-2.5 rounded-full ${
                                       step.color === "text-blue-600"
                                         ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                         : step.color === "text-green-600"
@@ -1503,7 +1504,7 @@ export default function HowToPlay() {
                               duration: 0.5,
                               delay: index * 0.15 + 0.5,
                             }}
-                            className="text-muted-foreground text-base sm:text-lg font-medium mb-3 sm:mb-4"
+                            className="text-muted-foreground text-base xs:text-lg sm:text-xl md:text-2xl font-medium mb-4 xs:mb-5 sm:mb-6 leading-relaxed"
                           >
                             {step.description}
                           </motion.p>
@@ -1522,7 +1523,7 @@ export default function HowToPlay() {
                       </div>
                     </CardHeader>
 
-                    <CardContent className="pt-0">
+                    <CardContent className="pt-0 px-5 xs:px-6 sm:px-7 md:px-8 pb-5 xs:pb-6 sm:pb-7 md:pb-8">
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1530,9 +1531,9 @@ export default function HowToPlay() {
                           duration: 0.5,
                           delay: index * 0.15 + 0.6,
                         }}
-                        className="bg-muted/30 rounded-xl p-3 xs:p-4 sm:p-6 group-hover:bg-muted/50 transition-all duration-300"
+                        className="bg-muted/30 rounded-2xl p-5 xs:p-6 sm:p-7 md:p-8 group-hover:bg-muted/50 transition-all duration-300"
                       >
-                        <p className="text-muted-foreground leading-relaxed text-xs xs:text-sm sm:text-base">
+                        <p className="text-muted-foreground leading-relaxed text-base xs:text-lg sm:text-xl md:text-2xl">
                           {step.details}
                         </p>
 
@@ -1544,15 +1545,15 @@ export default function HowToPlay() {
                             duration: 0.4,
                             delay: index * 0.15 + 0.8,
                           }}
-                          className="mt-4 sm:mt-6"
+                          className="mt-6 xs:mt-7 sm:mt-8"
                         >
                           <Button
                             variant="outline"
-                            size="sm"
-                            className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300 touch-manipulation min-h-[44px] text-sm"
+                            size="lg"
+                            className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300 touch-manipulation min-h-[56px] xs:min-h-[60px] sm:min-h-[64px] text-base xs:text-lg px-6 xs:px-7 sm:px-8 font-semibold rounded-xl w-full sm:w-auto"
                             disabled
                           >
-                            <Trophy className="w-4 h-4 mr-2" />
+                            <Trophy className="w-5 h-5 xs:w-6 xs:h-6 mr-3 xs:mr-4 flex-shrink-0" />
                             Achievement Locked
                           </Button>
                         </motion.div>
@@ -2062,19 +2063,19 @@ export default function HowToPlay() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-center px-4"
+              className="text-center px-4 sm:px-6 mb-8 sm:mb-10 md:mb-12"
             >
-              <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold mb-2 xs:mb-3 sm:mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 xs:mb-5 sm:mb-6 md:mb-8 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent leading-tight">
                 Got Questions?
               </h2>
-              <p className="text-sm xs:text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base xs:text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                 Your burning questions answered by the prediction masters! Get
                 ready to become unstoppable! 🧠💡
               </p>
             </motion.div>
 
             {/* FAQ Categories */}
-            <div className="grid gap-4 xs:gap-6 sm:gap-8 lg:gap-12 px-4">
+            <div className="grid gap-8 xs:gap-9 sm:gap-10 md:gap-12 lg:gap-14 px-4 sm:px-6">
               {faqCategories.map((category, categoryIndex) => (
                 <motion.div
                   key={category.id}
@@ -2083,13 +2084,13 @@ export default function HowToPlay() {
                   transition={{ duration: 0.6, delay: categoryIndex * 0.15 }}
                   className="group"
                 >
-                  <Card className="overflow-hidden border-2 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
+                  <Card className="overflow-hidden border-2 hover:border-primary/20 transition-all duration-300 hover:shadow-lg touch-manipulation rounded-2xl">
                     {/* Category Header */}
-                    <CardHeader className="pb-2 xs:pb-3 sm:pb-4">
+                    <CardHeader className="pb-4 xs:pb-5 sm:pb-6 md:pb-7 px-5 xs:px-6 sm:px-7 md:px-8 pt-5 xs:pt-6 sm:pt-7 md:pt-8">
                       <motion.div
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-2 xs:gap-3 sm:gap-4"
+                        className="flex items-center gap-4 xs:gap-5 sm:gap-6 md:gap-7"
                       >
                         {/* Category Icon */}
                         <motion.div
@@ -2100,10 +2101,10 @@ export default function HowToPlay() {
                           }}
                           whileTap={{ scale: 0.95 }}
                           transition={{ duration: 0.3 }}
-                          className={`flex items-center justify-center w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-xl ${category.bgColor} ${category.borderColor} border-2 shadow-sm group-hover:shadow-md transition-all duration-300 touch-manipulation`}
+                          className={`flex items-center justify-center w-14 h-14 xs:w-16 xs:h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl ${category.bgColor} ${category.borderColor} border-2 shadow-sm group-hover:shadow-md transition-all duration-300 touch-manipulation flex-shrink-0`}
                         >
                           <div className={category.color}>
-                            <div className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5">
+                            <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 md:w-9 md:h-9">
                               {category.icon}
                             </div>
                           </div>
@@ -2111,17 +2112,17 @@ export default function HowToPlay() {
 
                         {/* Category Title */}
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                          <CardTitle className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
                             {category.title}
                           </CardTitle>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-3 xs:gap-3.5 mt-2 xs:mt-3">
                             <div
-                              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${category.bgColor.replace(
+                              className={`w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 rounded-full ${category.bgColor.replace(
                                 "/10",
                                 "/60"
                               )}`}
                             />
-                            <span className="text-xs xs:text-sm text-muted-foreground font-medium">
+                            <span className="text-base xs:text-lg sm:text-xl text-muted-foreground font-semibold">
                               {category.questions.length} questions
                             </span>
                           </div>
@@ -2138,7 +2139,7 @@ export default function HowToPlay() {
                           className="hidden sm:block"
                         >
                           <div
-                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${category.bgColor} ${category.color} ${category.borderColor} border`}
+                            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider ${category.bgColor} ${category.color} ${category.borderColor} border`}
                           >
                             {category.id}
                           </div>
@@ -2147,7 +2148,7 @@ export default function HowToPlay() {
                     </CardHeader>
 
                     {/* Questions Accordion */}
-                    <CardContent className="pt-0">
+                    <CardContent className="pt-0 px-4 xs:px-5 sm:px-6 pb-4 xs:pb-5 sm:pb-6">
                       <Accordion type="single" collapsible className="w-full">
                         {category.questions.map((faq, questionIndex) => (
                           <motion.div
@@ -2166,41 +2167,41 @@ export default function HowToPlay() {
                               value={`${category.id}-${questionIndex}`}
                               className="border-b border-border/50 last:border-b-0 group/item"
                             >
-                              <AccordionTrigger className="text-left py-4 sm:py-6 px-3 sm:px-4 rounded-lg hover:bg-muted/30 transition-all duration-300 group-hover/item:bg-muted/50 touch-manipulation min-h-[48px]">
-                                <div className="flex items-start gap-3 sm:gap-4 w-full">
+                              <AccordionTrigger className="text-left py-4 xs:py-5 sm:py-6 px-3 xs:px-4 sm:px-5 rounded-lg hover:bg-muted/30 transition-all duration-300 group-hover/item:bg-muted/50 touch-manipulation min-h-[52px] xs:min-h-[56px] sm:min-h-[60px]">
+                                <div className="flex items-start gap-3 xs:gap-4 sm:gap-5 w-full">
                                   {/* Question Number */}
                                   <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full ${category.bgColor} ${category.borderColor} border text-xs sm:text-sm font-bold ${category.color} shrink-0 mt-0.5 touch-manipulation`}
+                                    className={`flex items-center justify-center w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-full ${category.bgColor} ${category.borderColor} border text-sm xs:text-base sm:text-lg font-bold ${category.color} shrink-0 mt-0.5 touch-manipulation`}
                                   >
                                     {questionIndex + 1}
                                   </motion.div>
 
                                   {/* Question Text */}
                                   <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm sm:text-base md:text-lg font-semibold text-foreground group-hover/item:text-primary transition-colors duration-300 text-left leading-relaxed">
+                                    <h4 className="text-base xs:text-lg sm:text-xl md:text-2xl font-semibold text-foreground group-hover/item:text-primary transition-colors duration-300 text-left leading-relaxed">
                                       {faq.question}
                                     </h4>
                                   </div>
                                 </div>
                               </AccordionTrigger>
 
-                              <AccordionContent className="px-3 sm:px-4 pb-4 sm:pb-6">
+                              <AccordionContent className="px-3 xs:px-4 sm:px-5 pb-5 xs:pb-6 sm:pb-7">
                                 <motion.div
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ duration: 0.3 }}
-                                  className="ml-8 sm:ml-12 pr-4 sm:pr-8"
+                                  className="ml-8 xs:ml-10 sm:ml-12 md:ml-14 pr-4 xs:pr-6 sm:pr-8"
                                 >
                                   {/* Answer Content */}
                                   <div
-                                    className={`p-4 sm:p-6 rounded-xl ${category.bgColor} border ${category.borderColor} relative overflow-hidden`}
+                                    className={`p-4 xs:p-5 sm:p-6 md:p-7 rounded-xl ${category.bgColor} border ${category.borderColor} relative overflow-hidden`}
                                   >
                                     {/* Background Pattern */}
                                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5 opacity-50" />
 
-                                    <p className="text-muted-foreground leading-relaxed text-sm sm:text-base relative z-10">
+                                    <p className="text-muted-foreground leading-relaxed text-sm xs:text-base sm:text-lg relative z-10">
                                       {faq.answer}
                                     </p>
 
@@ -2209,7 +2210,7 @@ export default function HowToPlay() {
                                       initial={{ scale: 0, opacity: 0 }}
                                       animate={{ scale: 1, opacity: 0.1 }}
                                       transition={{ duration: 0.5, delay: 0.2 }}
-                                      className={`absolute bottom-2 right-2 w-6 h-6 sm:w-8 sm:h-8 ${category.color} opacity-10`}
+                                      className={`absolute bottom-3 right-3 xs:bottom-4 xs:right-4 w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 ${category.color} opacity-10`}
                                     >
                                       {category.icon}
                                     </motion.div>
@@ -2220,29 +2221,29 @@ export default function HowToPlay() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, delay: 0.1 }}
-                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-4 text-xs sm:text-sm text-muted-foreground"
+                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mt-5 xs:mt-6 text-sm xs:text-base text-muted-foreground"
                                   >
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 xs:gap-2.5">
                                       <div
-                                        className={`w-1.5 h-1.5 rounded-full ${category.bgColor.replace(
+                                        className={`w-2 h-2 xs:w-2.5 xs:h-2.5 rounded-full ${category.bgColor.replace(
                                           "/10",
                                           "/60"
                                         )}`}
                                       />
                                       <span>Was this helpful?</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3 xs:gap-4">
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 px-3 text-xs hover:bg-green-500/10 hover:text-green-600 touch-manipulation"
+                                        className="h-10 xs:h-11 px-4 xs:px-5 text-sm xs:text-base hover:bg-green-500/10 hover:text-green-600 touch-manipulation"
                                       >
                                         👍 Yes
                                       </Button>
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 px-3 text-xs hover:bg-red-500/10 hover:text-red-600 touch-manipulation"
+                                        className="h-10 xs:h-11 px-4 xs:px-5 text-sm xs:text-base hover:bg-red-500/10 hover:text-red-600 touch-manipulation"
                                       >
                                         👎 No
                                       </Button>
