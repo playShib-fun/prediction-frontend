@@ -327,9 +327,8 @@ export default function HistoryCard({
                 <ChevronsDown className="w-4 h-4" />
               )}
               <div className="flex items-center">
-                <DollarSign className="w-4 h-4" />
                 <span className="font-mono">
-                  {Number(bet.amount).toFixed(2)}
+                  {(Number(bet.amount) * 1e18).toFixed(3)}
                 </span>
                 <span className="ml-1 font-medium">BONE</span>
               </div>
@@ -339,22 +338,27 @@ export default function HistoryCard({
 
         {renderCardContent()}
 
-        {roundStatus === "ended" && profitLoss !== undefined && (
+        {/* {roundStatus === "ended" && profitLoss !== undefined && (
           <CardFooter className="px-4 pb-4 pt-0">
-            <div className={`text-sm font-medium ${parseFloat(profitLoss) >= 0 ? "text-green-400" : "text-red-400"}`}>
-              P/L {parseFloat(profitLoss) >= 0 ? "+" : ""}{Number(profitLoss).toFixed(2)} BONE
+            <div
+              className={`text-sm font-medium ${
+                parseFloat(profitLoss) >= 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              P/L {parseFloat(profitLoss) >= 0 ? "+" : ""}
+              {Number(profitLoss).toFixed(2)} BONE
             </div>
           </CardFooter>
-        )}
+        )} */}
 
         {/* Show tx hash with search highlighting when available */}
-        {bet.transactionHash && (
+        {/* {bet.transactionHash && (
           <CardFooter className="px-4 pt-2">
             <div className="text-xs text-gray-400 truncate">
               tx: {highlightText(bet.transactionHash, searchTerm)}
             </div>
           </CardFooter>
-        )}
+        )} */}
       </Card>
     </motion.div>
   );
@@ -370,7 +374,9 @@ function highlightText(text: string, term?: string) {
   return (
     <>
       {before}
-      <mark className="bg-yellow-500/20 text-yellow-300 px-0.5 rounded-sm">{match}</mark>
+      <mark className="bg-yellow-500/20 text-yellow-300 px-0.5 rounded-sm">
+        {match}
+      </mark>
       {after}
     </>
   );

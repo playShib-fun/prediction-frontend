@@ -37,7 +37,10 @@ import {
   useBetBulls,
   useClaims,
 } from "@/hooks/use-prediction-data";
-import { useFormattedPriceByRoundId } from "@/hooks/use-bone-price";
+import {
+  useFormattedCurrentPrice,
+  useFormattedPriceByRoundId,
+} from "@/hooks/use-bone-price";
 import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
@@ -65,21 +68,16 @@ export default function GameCard({
 }: GameCardProps) {
   const [isLoading] = useState(false);
   const { data: startRound, isLoading: isStartLoading } = useStartRounds();
-  const isPlaceholderLater = state === "upcoming" && stateLabelOverride === "Later";
+  const isPlaceholderLater =
+    state === "upcoming" && stateLabelOverride === "Later";
 
   const [progress, setProgress] = useState(0);
   const [displayTime, setDisplayTime] = useState("0m 0s");
   const [timeLeftMsState, setTimeLeftMsState] = useState(0);
-  const {
-    data: betBears,
-    refetch: refetchBetBears,
-  } = useBetBears({
+  const { data: betBears, refetch: refetchBetBears } = useBetBears({
     roundId: roundId.toString(),
   });
-  const {
-    data: betBulls,
-    refetch: refetchBetBulls,
-  } = useBetBulls({
+  const { data: betBulls, refetch: refetchBetBulls } = useBetBulls({
     roundId: roundId.toString(),
   });
   const { data: priceByRoundId } = useFormattedPriceByRoundId(
@@ -106,24 +104,42 @@ export default function GameCard({
   });
 
   // Use real-time odds for upcoming rounds, static for others
-  const currentBearOdds = state === "upcoming" ? realTimeOdds.bearOdds : bearOdds;
-  const currentBullOdds = state === "upcoming" ? realTimeOdds.bullOdds : bullOdds;
+  const currentBearOdds =
+    state === "upcoming" ? realTimeOdds.bearOdds : bearOdds;
+  const currentBullOdds =
+    state === "upcoming" ? realTimeOdds.bullOdds : bullOdds;
 
   // Animation hooks for odds
-  const bearOddsAnimation = useOddsAnimation(currentBearOdds, { threshold: 0.05 });
-  const bullOddsAnimation = useOddsAnimation(currentBullOdds, { threshold: 0.05 });
+  const bearOddsAnimation = useOddsAnimation(currentBearOdds, {
+    threshold: 0.05,
+  });
+  const bullOddsAnimation = useOddsAnimation(currentBullOdds, {
+    threshold: 0.05,
+  });
   // current price removed from card UI
 
   // Use round data directly for ended rounds
-  const { data: round, isLoading: isRoundLoading, refetch: refetchRound } = useRound(
-    roundId.toString()
-  );
+  const {
+    data: round,
+    isLoading: isRoundLoading,
+    refetch: refetchRound,
+  } = useRound(roundId.toString());
   const { lockRound } = useRoundDetails(roundId.toString());
   const [isCalculatingRewards, setIsCalculatingRewards] = useState(false);
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get end round data for ended rounds
   const { data: endRound } = useEndRound(roundId.toString());
+
+  const { data: currentPrice, refetch: refetchCurrentPrice } =
+    useFormattedCurrentPrice();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchCurrentPrice();
+    }, 15000); // 15s
+    return () => clearInterval(interval);
+  }, []);
 
   // removed periodic refetch for current price
 
@@ -136,10 +152,10 @@ export default function GameCard({
   // Calculate price difference for ended rounds using values directly from round
   const priceDifference = useMemo(() => {
     if (round?.endPrice && round?.lockPrice) {
-      const endPx = parseFloat(round.endPrice) / 1e6;
-      const lockPx = parseFloat(round.lockPrice) / 1e6;
+      const endPx = parseFloat(round.endPrice);
+      const lockPx = parseFloat(round.lockPrice);
       if (!Number.isFinite(endPx) || !Number.isFinite(lockPx)) return 0;
-      return endPx - lockPx;
+      return (endPx - lockPx) / 1e8;
     }
     return 0;
   }, [round]);
@@ -147,7 +163,7 @@ export default function GameCard({
   // Get endPrice for display
   const endPrice = useMemo(() => {
     if (round?.endPrice) {
-      return parseFloat(round.endPrice) / 1e6;
+      return parseFloat(round.endPrice) / 1e8;
     }
     return 0;
   }, [round]);
@@ -155,7 +171,7 @@ export default function GameCard({
   // Get lockPrice for display
   const lockPrice = useMemo(() => {
     if (round?.lockPrice) {
-      return parseFloat(round.lockPrice) / 1e6;
+      return parseFloat(round.lockPrice) / 1e8;
     }
     return 0;
   }, [round]);
@@ -173,8 +189,12 @@ export default function GameCard({
     // Upcoming rounds use real-time odds
     if (isRoundLoading || state === "upcoming") return;
 
-    const totalBearAmount = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
-    const totalBullAmount = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
+    const totalBearAmount = round?.bearAmount
+      ? parseFloat(round.bearAmount) / 1e18
+      : 0;
+    const totalBullAmount = round?.bullAmount
+      ? parseFloat(round.bullAmount) / 1e18
+      : 0;
     const total = totalBearAmount + totalBullAmount;
 
     const bearOddsValue = totalBearAmount === 0 ? 1 : total / totalBearAmount;
@@ -230,10 +250,18 @@ export default function GameCard({
   // Determine which side the user bet on for highlighting
   const userBetSide = useMemo<"bull" | "bear" | null>(() => {
     if (!address) return null;
-    if (betBulls?.some((bet) => bet.sender.toLowerCase() === address.toLowerCase())) {
+    if (
+      betBulls?.some(
+        (bet) => bet.sender.toLowerCase() === address.toLowerCase()
+      )
+    ) {
       return "bull";
     }
-    if (betBears?.some((bet) => bet.sender.toLowerCase() === address.toLowerCase())) {
+    if (
+      betBears?.some(
+        (bet) => bet.sender.toLowerCase() === address.toLowerCase()
+      )
+    ) {
       return "bear";
     }
     return null;
@@ -249,15 +277,21 @@ export default function GameCard({
 
     // If this is a placeholder "Later" card, derive the timestamp based on previous known rounds
     if (isPlaceholderLater || !Number.isFinite(startRoundTimestamp)) {
-      const previousKnown = startRound?.find((r) => Number(r.epoch) === (roundId - 1));
+      const previousKnown = startRound?.find(
+        (r) => Number(r.epoch) === roundId - 1
+      );
       // If not found, pick the largest epoch smaller than current
       const fallbackPrevious = previousKnown
         ? previousKnown
         : startRound
             ?.filter((r) => Number(r.epoch) < roundId)
             .sort((a, b) => Number(b.epoch) - Number(a.epoch))[0];
-      const baselineEpoch = fallbackPrevious ? Number(fallbackPrevious.epoch) : roundId;
-      const baselineTs = fallbackPrevious ? Number(fallbackPrevious.timestamp) : Date.now();
+      const baselineEpoch = fallbackPrevious
+        ? Number(fallbackPrevious.epoch)
+        : roundId;
+      const baselineTs = fallbackPrevious
+        ? Number(fallbackPrevious.timestamp)
+        : Date.now();
       const roundOffset = Math.max(0, roundId - baselineEpoch);
       startRoundTimestamp = baselineTs + roundOffset * 5 * 60 * 1000;
     }
@@ -279,7 +313,10 @@ export default function GameCard({
     const elapsed = Math.max(0, Math.min(now - segmentStart, totalDuration));
     const timeLeftMs = Math.max(0, endTime - now);
 
-    const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+    const progress = Math.min(
+      100,
+      Math.max(0, (elapsed / totalDuration) * 100)
+    );
 
     const minutes = Math.floor(timeLeftMs / 60000);
     const seconds = Math.floor((timeLeftMs % 60000) / 1000);
@@ -350,7 +387,7 @@ export default function GameCard({
                 ? ["#22c55e", "#16a34a", "#22c55e"]
                 : ["#ef4444", "#b91c1c", "#ef4444"]
             }
-            borderWidth={3}
+            borderWidth={5}
             duration={10}
             className="opacity-100"
           />
@@ -377,7 +414,9 @@ export default function GameCard({
               {state === "upcoming" && (
                 <Label className="text-white bg-yellow-500 px-2 py-0.5 rounded-full">
                   <Clock className="w-4 h-4" />
-                  {stateLabelOverride === "Later" ? "Later" : (stateLabelOverride || "Next")}
+                  {stateLabelOverride === "Later"
+                    ? "Later"
+                    : stateLabelOverride || "Next"}
                 </Label>
               )}
 
@@ -437,50 +476,118 @@ export default function GameCard({
         )}
         <CardContent className="text-gray-500 flex flex-col items-start justify-between py-4 px-4 dark:bg-black/50 bg-white/50 rounded w-11/12 mx-auto gap-4">
           {state === "ended" && (
-            <div className="flex flex-col justify-between group">
-              <p
-                className={`text-2xl font-black ${state === "ended" && round
-                    ? "text-blue-500"
-                    : "dark:text-secondary text-gray-500"
-                  } flex items-center gap-1`}
-              >
-                <DollarSign className="w-6 h-6" />
-                {endPrice.toFixed(4)}
-              </p>
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
-                    <ChartArea className="w-4 h-4" />
-                    Closed Price
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-          )}
-
-          {(
-            <div className="flex flex-col justify-between group">
-              <p
-                className={`text-2xl font-black ${isPlaceholderLater
-                    ? "dark:text-secondary text-gray-500"
-                    : totalPoolBone > 0
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col justify-between group">
+                <p
+                  className={`text-2xl font-black ${
+                    state === "ended" && round
                       ? "text-blue-500"
                       : "dark:text-secondary text-gray-500"
                   } flex items-center gap-1`}
+                >
+                  <DollarSign className="w-6 h-6" />
+                  {endPrice.toFixed(4)}
+                </p>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
+                      <ChartArea className="w-4 h-4" />
+                      Closed Price
+                    </h2>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                  <p
+                    className={`text-sm break-keep w-auto px-2 py-1 rounded-xs flex gap-1 items-center font-mono font-bold ${
+                      priceDifference > 0
+                        ? "bg-green-700/25 text-green-500"
+                        : "bg-red-700/25 text-red-500"
+                    }`}
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    {priceDifference.toFixed(4)}
+                    {priceDifference > 0 ? (
+                      <ChevronsUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronsDown className="w-4 h-4" />
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {state === "live" && (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col justify-between group">
+                <p
+                  className={`text-2xl font-black ${
+                    state === "live" && round
+                      ? "text-blue-500"
+                      : "dark:text-secondary text-gray-500"
+                  } flex items-center gap-1`}
+                >
+                  <DollarSign className="w-6 h-6" />
+                  {currentPrice ? currentPrice.toFixed(4) : "0.0000"}
+                </p>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
+                      <ChartArea className="w-4 h-4" />
+                      Current Price
+                    </h2>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                {currentPrice && (
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={`text-sm break-keep w-auto px-2 py-1 rounded-xs flex gap-1 items-center font-mono font-bold ${
+                        currentPrice > lockPrice
+                          ? "bg-green-700/25 text-green-500"
+                          : "bg-red-700/25 text-red-500"
+                      }`}
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      {(currentPrice - lockPrice).toFixed(4)}
+                      {currentPrice > lockPrice ? (
+                        <ChevronsUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronsDown className="w-4 h-4" />
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {
+            <div className="flex flex-col justify-between group">
+              <p
+                className={`text-2xl font-black ${
+                  isPlaceholderLater
+                    ? "dark:text-secondary text-gray-500"
+                    : totalPoolBone > 0
+                    ? "text-blue-500"
+                    : "dark:text-secondary text-gray-500"
+                } flex items-center gap-1`}
               >
                 <Coins className="w-6 h-6" />
-                {isPlaceholderLater ? "- BONE" : `${totalPoolBone.toFixed(2)} BONE`}
+                {isPlaceholderLater
+                  ? "- BONE"
+                  : `${totalPoolBone.toFixed(2)} BONE`}
               </p>
               <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
                 <PiggyBank className="w-4 h-4" />
                 Prize Pool
               </h2>
-
             </div>
-          )}
+          }
 
-          {(state === "upcoming") && (
+          {state === "upcoming" && (
             <div className="flex items-center gap-2 w-full">
               <Progress value={progress} className="w-full bg-primary/20" />
               {!isPlaceholderLater && (
@@ -573,14 +680,20 @@ export default function GameCard({
             {/* Higher (Bull) odds on the left to match button order */}
             <AnimatedOdds
               value={currentBullOdds}
-              isAnimating={bullOddsAnimation.isAnimating || (state === "upcoming" && isRealTimeAnimating)}
+              isAnimating={
+                bullOddsAnimation.isAnimating ||
+                (state === "upcoming" && isRealTimeAnimating)
+              }
               direction={bullOddsAnimation.direction}
               position="bull"
             />
             {/* Lower (Bear) odds on the right */}
             <AnimatedOdds
               value={currentBearOdds}
-              isAnimating={bearOddsAnimation.isAnimating || (state === "upcoming" && isRealTimeAnimating)}
+              isAnimating={
+                bearOddsAnimation.isAnimating ||
+                (state === "upcoming" && isRealTimeAnimating)
+              }
               direction={bearOddsAnimation.direction}
               position="bear"
             />
@@ -597,10 +710,11 @@ export default function GameCard({
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`w-full text-lg rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-default disabled:cursor-not-allowed ${userBetSide === "bull"
+                className={`w-full text-lg rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-default disabled:cursor-not-allowed ${
+                  userBetSide === "bull"
                     ? "disabled:opacity-100 ring-4 ring-green-400 shadow-[0_0_24px_rgba(34,197,94,0.65)] scale-[1.02] animate-pulse"
                     : ""
-                  }`}
+                }`}
               >
                 <ChevronsUp className="w-8 h-8" />
                 <span className="text-lg font-bold">Higher</span>
@@ -616,10 +730,11 @@ export default function GameCard({
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`w-full text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-default disabled:cursor-not-allowed ${userBetSide === "bear"
+                className={`w-full text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-default disabled:cursor-not-allowed ${
+                  userBetSide === "bear"
                     ? "disabled:opacity-100 ring-4 ring-red-400 shadow-[0_0_24px_rgba(239,68,68,0.65)] scale-[1.02] animate-pulse"
                     : ""
-                  }`}
+                }`}
               >
                 <ChevronsDown className="w-8 h-8" />
                 <span className="text-lg font-bold">Lower</span>
@@ -651,22 +766,27 @@ export default function GameCard({
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`flex-1 rounded-xs cursor-default text-lg font-bold disabled:cursor-not-allowed disabled:opacity-100 ${isFinalHigherThanEntry
+                className={`flex-1 rounded-xs cursor-default text-lg font-bold disabled:cursor-not-allowed disabled:opacity-100 ${
+                  isFinalHigherThanEntry
                     ? "bg-green-500 text-green-900 ring-2 ring-green-300 shadow-[0_0_20px_rgba(34,197,94,0.35)]"
                     : "bg-muted/40 text-muted-foreground"
-                  }`}
+                }`}
               >
                 <ChevronsUp className="w-8 h-8" />
                 <span className="text-lg font-bold">Higher</span>
               </NeumorphButton>
-              <Separator orientation="vertical" className="h-full bg-gray-500/60" />
+              <Separator
+                orientation="vertical"
+                className="h-full bg-gray-500/60"
+              />
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`flex-1 rounded-xs cursor-default text-lg font-bold disabled:cursor-not-allowed disabled:opacity-100 ${isFinalLowerThanEntry
-                    ? "bg-red-500 text-white ring-2 ring-red-300 shadow-[0_0_20px_rgba(239,68,68,0.35)]"
+                className={`flex-1 rounded-xs cursor-default text-lg font-bold disabled:cursor-not-allowed disabled:opacity-100 ${
+                  isFinalLowerThanEntry
+                    ? "bg-red-500 text-red-700 ring-2 ring-red-300 shadow-[0_0_20px_rgba(239,68,68,0.35)]"
                     : "bg-muted/40 text-muted-foreground"
-                  }`}
+                }`}
               >
                 <ChevronsDown className="w-8 h-8" />
                 <span className="text-lg font-bold">Lower</span>
@@ -675,15 +795,19 @@ export default function GameCard({
             {/* Show final odds like live card */}
             <CardFooter className="flex items-center justify-between -mt-2">
               <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
-                <p className="text-lg font-bold font-mono">{bullOdds.toFixed(2)}x</p>
+                <p className="text-lg font-bold font-mono">
+                  {bullOdds.toFixed(2)}x
+                </p>
               </div>
               <div className="px-2 py-1 rounded-r-xs w-full flex-1 bg-red-700/25 text-red-500 flex items-center justify-center">
-                <p className="text-lg font-bold font-mono">{bearOdds.toFixed(2)}x</p>
+                <p className="text-lg font-bold font-mono">
+                  {bearOdds.toFixed(2)}x
+                </p>
               </div>
             </CardFooter>
 
-            {betPlaced && (
-              isClaimable ? (
+            {betPlaced &&
+              (isClaimable ? (
                 <CardFooter className="flex items-center justify-center -mt-2 p-4">
                   <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-lg border border-indigo-500/20 p-4 w-full">
                     <div className="flex items-center justify-center gap-3">
@@ -709,8 +833,7 @@ export default function GameCard({
                     </div>
                   </div>
                 </CardFooter>
-              )
-            )}
+              ))}
           </>
         )}
         {state === "live" && (
@@ -726,7 +849,10 @@ export default function GameCard({
                 <ChevronsUp className="w-8 h-8" />
                 <span className="text-lg font-bold">Higher</span>
               </NeumorphButton>
-              <Separator orientation="vertical" className="h-full bg-gray-500/60" />
+              <Separator
+                orientation="vertical"
+                className="h-full bg-gray-500/60"
+              />
               {/* Lower on the right */}
               <NeumorphButton
                 disabled
