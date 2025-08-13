@@ -30,18 +30,15 @@ import { ShineBorder } from "../magicui/shine-border";
 import { motion } from "motion/react";
 import NeumorphButton from "../ui/neumorph-button";
 import {
-  useStartRounds,
   useRound,
   useBetBears,
   useBetBulls,
   useClaims,
 } from "@/hooks/use-prediction-data";
 import { useFormattedCurrentPrice } from "@/hooks/use-bone-price";
-import { StartRound } from "@/lib/graphql-client";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import BoneLoadingState from "./bone-loading-state";
-import { useRoundDetails } from "@/hooks/use-prediction-data";
 // import FiveMinuteTimer from "./five-minute-timer";
 import AnimatedOdds from "./animated-odds";
 import useOddsAnimation from "@/hooks/use-odds-animation";
@@ -63,7 +60,6 @@ export default function GameCard({
   placeholderOffset: _placeholderOffset,
 }: GameCardProps) {
   const [isLoading] = useState(false);
-  const { data: startRound, isLoading: isStartLoading } = useStartRounds();
   const isPlaceholderLater =
     state === "upcoming" && stateLabelOverride === "Later";
 
@@ -120,7 +116,8 @@ export default function GameCard({
     isLoading: isRoundLoading,
     refetch: refetchRound,
   } = useRound(roundId.toString());
-  const { lockRound } = useRoundDetails(roundId.toString());
+  // For placeholder "Later" cards, use previous round's startTimeStamp as baseline
+  const { data: prevRound } = useRound((roundId - 1).toString());
   const [isCalculatingRewards, setIsCalculatingRewards] = useState(false);
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -203,16 +200,6 @@ export default function GameCard({
     calculateOdds();
   }, [round, isRoundLoading, state]);
 
-  function getCurrentRound(): StartRound | null {
-    if (isStartLoading) {
-      return null;
-    }
-    const currentRound = startRound?.find((round) => {
-      return round.epoch === roundId.toString();
-    });
-    return currentRound ?? null;
-  }
-
   // connected wallet address
   const { address } = useWalletConnection();
 
@@ -264,55 +251,42 @@ export default function GameCard({
   }, [address, betBears, betBulls]);
 
   function calculateProgress() {
-    if (isStartLoading) {
-      return 0;
-    }
+    // Determine base start time from allRounds data
+    const baseStartMs = round?.startTimeStamp
+      ? Number(round.startTimeStamp) * 1000 // ensure ms
+      : undefined;
 
-    // Base start timestamp for this card's upcoming window
-    let startRoundTimestamp = Number(getCurrentRound()?.timestamp);
+    let effectiveStartMs = baseStartMs;
 
-    // If this is a placeholder "Later" card, derive the timestamp based on previous known rounds
-    if (isPlaceholderLater || !Number.isFinite(startRoundTimestamp)) {
-      const previousKnown = startRound?.find(
-        (r) => Number(r.epoch) === roundId - 1
-      );
-      // If not found, pick the largest epoch smaller than current
-      const fallbackPrevious = previousKnown
-        ? previousKnown
-        : startRound
-            ?.filter((r) => Number(r.epoch) < roundId)
-            .sort((a, b) => Number(b.epoch) - Number(a.epoch))[0];
-      const baselineEpoch = fallbackPrevious
-        ? Number(fallbackPrevious.epoch)
-        : roundId;
-      const baselineTs = fallbackPrevious
-        ? Number(fallbackPrevious.timestamp)
+    // For placeholder or missing data, approximate using previous round start time
+    if (isPlaceholderLater || !Number.isFinite(effectiveStartMs as number)) {
+      const prevStartMs = prevRound?.startTimeStamp
+        ? Number(prevRound.startTimeStamp) * 1000
         : Date.now();
-      const roundOffset = Math.max(0, roundId - baselineEpoch);
-      startRoundTimestamp = baselineTs + roundOffset * 5 * 60 * 1000;
+      const offset = typeof _placeholderOffset === "number"
+        ? _placeholderOffset
+        : 1;
+      effectiveStartMs = prevStartMs + offset * 5 * 60 * 1000;
     }
 
-    let segmentStart = startRoundTimestamp;
-    let endTime = startRoundTimestamp + 5 * 60 * 1000; // default upcoming 5m
+    // Fallback if still undefined
+    const startMs = (effectiveStartMs as number) ?? Date.now();
+
+    let segmentStart = startMs;
+    let endTime = startMs + 5 * 60 * 1000; // upcoming window: 5 minutes
 
     if (state === "live") {
-      const lockTimestamp = lockRound?.timestamp
-        ? Number(lockRound.timestamp)
-        : startRoundTimestamp + 5 * 60 * 1000; // fallback if lock not present
-      segmentStart = lockTimestamp;
-      endTime = lockTimestamp + 5 * 60 * 1000; // live is 5m
+      const lockMs = startMs + 5 * 60 * 1000; // lock occurs 5 minutes after start
+      segmentStart = lockMs;
+      endTime = lockMs + 5 * 60 * 1000; // live window: next 5 minutes
     }
 
     const now = Date.now();
-
-    const totalDuration = endTime - segmentStart;
+    const totalDuration = Math.max(1, endTime - segmentStart);
     const elapsed = Math.max(0, Math.min(now - segmentStart, totalDuration));
     const timeLeftMs = Math.max(0, endTime - now);
 
-    const progress = Math.min(
-      100,
-      Math.max(0, (elapsed / totalDuration) * 100)
-    );
+    const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
 
     const minutes = Math.floor(timeLeftMs / 60000);
     const seconds = Math.floor((timeLeftMs % 60000) / 1000);
@@ -336,14 +310,11 @@ export default function GameCard({
   }
 
   useEffect(() => {
-    if (isStartLoading) {
-      return;
-    }
     const interval = setInterval(() => {
       calculateProgress();
     }, 1000);
     return () => clearInterval(interval);
-  }, [isStartLoading]);
+  }, [round, prevRound, state, isPlaceholderLater]);
 
   // Periodically refresh round data for upcoming card to update prize pool and odds
   useEffect(() => {
