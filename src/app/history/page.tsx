@@ -15,13 +15,25 @@ import { useEffect, useMemo, useState } from "react";
 import { formatUnits } from "viem";
 import Loading from "@/components/shibplay/loading";
 import HistoryCard from "@/components/shibplay/history-card";
-import HistoryFilters, {
-  FilterType,
-} from "@/components/shibplay/history-filters";
+import StatisticsDashboard from "@/components/shibplay/statistics-dashboard";
+import FilterPanel from "@/components/shibplay/filter-panel";
+import HistoryControls from "@/components/shibplay/history-controls";
+import { useHistoryStats } from "@/hooks/use-history-stats";
+import { useHistoryFilters, useHistorySearch } from "@/hooks/use-history-filters";
+// Utilities are used internally by hooks
+import type { BetRecord } from "@/lib/history-types";
+import { useInfiniteScroll, useVirtualInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { StatisticsCalculator } from "@/lib/history-statistics";
 
 export default function History() {
   const { address } = useWalletConnection();
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  // Enhanced filters and sort state
+  const [allProcessedBets, setAllProcessedBets] = useState<BetRecord[]>([]);
+  const { filters, setFilters, sort, setSort, filteredData } = useHistoryFilters(allProcessedBets, {
+    validateOnChange: true,
+  });
+  // Debounce occurs in controls (300ms). Avoid double-debouncing here.
+  const { setSearchTerm, searchResults } = useHistorySearch(filteredData, 0);
 
   const {
     data: claims,
@@ -89,49 +101,70 @@ export default function History() {
     return bets.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
   }, [bearBets, bullBets]);
 
-  // Calculate stats for each bet
+  // Calculate enhanced bet records with outcome mapping expected by utilities
   const betsWithStats = useMemo(() => {
     return allBets.map((bet) => {
       const roundStatus = getRoundStatus(bet.roundId);
-      const isClaimed =
-        claims?.some((claim) => claim.roundId === bet.roundId) ?? false;
+      const isClaimed = claims?.some((claim) => claim.roundId === bet.roundId) ?? false;
+      // Derive status in terms of won/lost/pending/calculating
+      let status: BetRecord["status"] = "pending";
+      if (roundStatus === "ended") {
+        status = isClaimed ? "won" : "lost";
+      } else if (roundStatus === "calculating") {
+        status = "calculating";
+      } else if (roundStatus === "running") {
+        status = "pending";
+      }
 
-      return {
-        ...bet,
-        roundStatus,
-        isClaimed,
-      };
+      const base: BetRecord = {
+        id: `${bet.transactionHash}-${bet.logIndex}`,
+        roundId: bet.roundId,
+        type: bet.type as "bull" | "bear",
+        amount: bet.amount,
+        timestamp: bet.timestamp,
+        transactionHash: bet.transactionHash,
+        sender: bet.sender,
+        logIndex: bet.logIndex,
+        status,
+        claimedAmount: isClaimed ? (claims?.find(c => c.roundId === bet.roundId && c.sender?.toLowerCase() === (address?.toLowerCase() ?? ""))?.amount ?? undefined) : undefined,
+      } as BetRecord;
+
+      // Calculate profit/loss
+      const { profit, profitPercentage } = StatisticsCalculator.calculateBetProfit(base);
+      return { ...base, profit, profitPercentage } as BetRecord;
     });
-  }, [allBets, claims]);
+  }, [allBets, claims, address]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const calculating = betsWithStats.filter(
-      (bet) => bet.roundStatus === "calculating"
-    ).length;
-    const running = betsWithStats.filter(
-      (bet) => bet.roundStatus === "running"
-    ).length;
-    // We're not showing upcoming in filters anymore
+  // Keep a local copy for filter hook input
+  useEffect(() => {
+    setAllProcessedBets(betsWithStats);
+  }, [betsWithStats]);
 
-    // Calculate winners and losers from ended rounds
-    const endedBets = betsWithStats.filter(
-      (bet) => bet.roundStatus === "ended"
-    );
-    const winners = endedBets.filter(
-      (bet) => claims?.some((claim) => claim.roundId === bet.roundId) ?? false
-    ).length;
-    const losers = endedBets.length - winners;
+  // Compute statistics for current filtered dataset
+  const statsHook = useHistoryStats(searchResults, { recalculateOnDataChange: true });
 
-    return {
-      total: betsWithStats.length,
-      winners,
-      losers,
-      calculating,
-      running,
-      upcoming: 0, // We're not showing upcoming in filters anymore
-    };
-  }, [betsWithStats, claims]);
+  // Pagination with infinite scroll
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const paginatedResults = useMemo(() => searchResults.slice(0, page * PAGE_SIZE), [searchResults, page]);
+  const hasMore = paginatedResults.length < searchResults.length;
+
+  const loadMore = async () => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    // Simulate network latency for UX and to avoid rapid loads
+    await new Promise((r) => setTimeout(r, 300));
+    setPage((p) => p + 1);
+    setIsLoadingMore(false);
+  };
+
+  const { triggerRef, error: loadError, retry: retryLoad } = useInfiniteScroll(loadMore, { threshold: 200, hasMore, isLoading: isLoadingMore });
+
+  // Reset pagination on filters/sort/search change
+  useEffect(() => {
+    setPage(1);
+  }, [filters.outcome, filters.betType, filters.roundStatus, filters.dateRange.preset, filters.amountRange.min, filters.amountRange.max, filters.search, sort.field, sort.direction]);
 
   function isRoundLocked(roundId: string) {
     return lockRounds?.some((lock) => lock.epoch === roundId);
@@ -190,16 +223,29 @@ export default function History() {
         History
       </h1>
 
-      {/* Filter Component */}
-      <HistoryFilters
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        stats={stats}
+      {/* Statistics Dashboard */}
+      <StatisticsDashboard statistics={statsHook.statistics} isLoading={statsHook.isLoading} filteredData={searchResults} />
+
+      {/* Controls: search, sort, export, active filters */}
+      <HistoryControls
+        filters={filters}
+        onFiltersChange={(f) => { setFilters(f); }}
+        sort={sort}
+        onSortChange={(s) => setSort(s)}
+        totalResults={searchResults.length}
+        onSearchChange={(term) => {
+          setFilters({ ...filters, search: term });
+          setSearchTerm(term);
+        }}
+        dataForExport={searchResults}
       />
 
-      {/* Results - HistoryCard will handle filtering */}
+      {/* Filter panel (drawer/modal/sidebar) */}
+      <FilterPanel filters={filters} onChange={(f) => setFilters(f)} />
+
+      {/* Results with infinite scroll and virtualization for large lists */}
       <div className="grid gap-4">
-        {betsWithStats.length === 0 ? (
+        {paginatedResults.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-300 mb-2">
@@ -209,34 +255,64 @@ export default function History() {
               You haven&apos;t placed any bets yet.
             </p>
           </div>
+        ) : paginatedResults.length > 100 ? (
+          (() => {
+            const virtual = useVirtualInfiniteScroll(
+              paginatedResults,
+              128,
+              720,
+              loadMore,
+              { threshold: 200, hasMore, isLoading: isLoadingMore, overscan: 6 }
+            );
+            return (
+              <div ref={virtual.containerRef as any} style={{ height: 720, overflow: 'auto', position: 'relative' }} className="rounded-xl border border-gray-800/50">
+                <div style={{ position: 'relative', height: virtual.totalHeight }}>
+                  {virtual.visibleItems.map(({ item: bet, index, style }) => (
+                    <div key={`${bet.roundId}-${bet.type}-${bet.timestamp}`} style={style}>
+                      <HistoryCard
+                        bet={{ roundId: bet.roundId, type: bet.type, amount: (() => { try { return formatUnits(BigInt(bet.amount), 18); } catch { return "0"; } })(), timestamp: bet.timestamp, transactionHash: bet.transactionHash }}
+                        roundStatus={bet.status === 'won' || bet.status === 'lost' ? 'ended' : bet.status === 'calculating' ? 'calculating' : 'running'}
+                        index={index}
+                        isClaimed={bet.status === 'won'}
+                        profitLoss={bet.profit}
+                        searchTerm={filters.search}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="py-3 text-center text-gray-400">
+                  {isLoadingMore ? "Loading more..." : hasMore ? (loadError ? <button onClick={() => retryLoad()} className="text-red-400 underline">Failed to load. Tap to retry.</button> : "Scroll for more") : "End of results"}
+                </div>
+              </div>
+            );
+          })()
         ) : (
-          betsWithStats.map((bet, index) => (
+          paginatedResults.map((bet, index) => (
             <HistoryCard
-              key={`${bet.roundId}-${bet.type}-${bet.roundStatus}`}
-              bet={{
-                roundId: bet.roundId,
-                type: bet.type as "bull" | "bear",
-                  amount: (() => {
-                    try {
-                      return formatUnits(BigInt(bet.amount), 18);
-                    } catch {
-                      return "0";
-                    }
-                  })(),
-                timestamp: bet.timestamp,
-              }}
-              roundStatus={
-                bet.roundStatus as
-                  | "calculating"
-                  | "running"
-                  | "upcoming"
-                  | "ended"
-              }
+              key={`${bet.roundId}-${bet.type}-${bet.timestamp}`}
+              bet={{ roundId: bet.roundId, type: bet.type, amount: (() => { try { return formatUnits(BigInt(bet.amount), 18); } catch { return "0"; } })(), timestamp: bet.timestamp, transactionHash: bet.transactionHash }}
+              roundStatus={bet.status === 'won' || bet.status === 'lost' ? 'ended' : bet.status === 'calculating' ? 'calculating' : 'running'}
               index={index}
-              isClaimed={bet.isClaimed}
-              activeFilter={activeFilter}
+              isClaimed={bet.status === 'won'}
+              profitLoss={bet.profit}
+              searchTerm={filters.search}
             />
           ))
+        )}
+
+        {/* Infinite scroll trigger and states for non-virtualized path */}
+        {paginatedResults.length <= 100 && (
+          hasMore ? (
+            <div ref={triggerRef as any} className="h-12 flex items-center justify-center text-gray-400">
+              {isLoadingMore ? "Loading more..." : loadError ? (
+                <button onClick={() => retryLoad()} className="text-red-400 underline">Failed to load. Tap to retry.</button>
+              ) : (
+                "Scroll to load more"
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-4">End of results</div>
+          )
         )}
       </div>
     </div>
