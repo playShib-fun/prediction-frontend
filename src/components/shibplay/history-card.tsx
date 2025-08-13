@@ -41,7 +41,7 @@ export default function HistoryCard({
   index,
   isClaimed = false,
   activeFilter = "all",
-  profitLoss,
+  // profitLoss,
   searchTerm,
 }: HistoryCardProps) {
   const { address } = useWalletConnection();
