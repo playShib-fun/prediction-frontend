@@ -50,6 +50,7 @@ interface GameCardProps {
   state: "live" | "ended" | "upcoming";
   active?: boolean;
   stateLabelOverride?: string;
+  placeholderOffset?: number;
 }
 
 export default function GameCard({
@@ -57,9 +58,11 @@ export default function GameCard({
   state,
   active = false,
   stateLabelOverride,
+  placeholderOffset: _placeholderOffset,
 }: GameCardProps) {
   const [isLoading] = useState(false);
   const { data: startRound, isLoading: isStartLoading } = useStartRounds();
+  const isPlaceholderLater = state === "upcoming" && stateLabelOverride === "Later";
 
   const [progress, setProgress] = useState(0);
   const [displayTime, setDisplayTime] = useState("0m 0s");
@@ -209,7 +212,25 @@ export default function GameCard({
     if (isStartLoading) {
       return 0;
     }
-    const startRoundTimestamp = Number(getCurrentRound()?.timestamp);
+
+    // Base start timestamp for this card's upcoming window
+    let startRoundTimestamp = Number(getCurrentRound()?.timestamp);
+
+    // If this is a placeholder "Later" card, derive the timestamp based on previous known rounds
+    if (isPlaceholderLater || !Number.isFinite(startRoundTimestamp)) {
+      const previousKnown = startRound?.find((r) => Number(r.epoch) === (roundId - 1));
+      // If not found, pick the largest epoch smaller than current
+      const fallbackPrevious = previousKnown
+        ? previousKnown
+        : startRound
+            ?.filter((r) => Number(r.epoch) < roundId)
+            .sort((a, b) => Number(b.epoch) - Number(a.epoch))[0];
+      const baselineEpoch = fallbackPrevious ? Number(fallbackPrevious.epoch) : roundId;
+      const baselineTs = fallbackPrevious ? Number(fallbackPrevious.timestamp) : Date.now();
+      const roundOffset = Math.max(0, roundId - baselineEpoch);
+      startRoundTimestamp = baselineTs + roundOffset * 5 * 60 * 1000;
+    }
+
     let segmentStart = startRoundTimestamp;
     let endTime = startRoundTimestamp + 5 * 60 * 1000; // default upcoming 5m
 
@@ -324,7 +345,7 @@ export default function GameCard({
               {state === "upcoming" && (
                 <Label className="text-white bg-yellow-500 px-2 py-0.5 rounded-full">
                   <Clock className="w-4 h-4" />
-                  {stateLabelOverride || "Next"}
+                  {stateLabelOverride === "Later" ? "Later" : (stateLabelOverride || "Next")}
                 </Label>
               )}
 
@@ -374,14 +395,6 @@ export default function GameCard({
           </div>
         )}
         <CardContent className="text-gray-500 flex flex-col items-start justify-between py-4 px-4 dark:bg-black/50 bg-white/50 rounded w-11/12 mx-auto gap-4">
-          {state === "upcoming" && stateLabelOverride === "Later" ? (
-            <div className="w-full h-32 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-3">
-                <FiveMinuteTimer />
-                <p className="text-sm text-muted-foreground">Starts soon</p>
-              </div>
-            </div>
-          ) : null}
           {state === "ended" && (
             <div className="flex flex-col justify-between group">
               <p
@@ -405,16 +418,18 @@ export default function GameCard({
 
           )}
 
-          {!(state === "upcoming" && stateLabelOverride === "Later") && (
+          {(
             <div className="flex flex-col justify-between group">
               <p
-                className={`text-2xl font-black ${totalPoolBone > 0
-                    ? "text-blue-500"
-                    : "dark:text-secondary text-gray-500"
+                className={`text-2xl font-black ${isPlaceholderLater
+                    ? "dark:text-secondary text-gray-500"
+                    : totalPoolBone > 0
+                      ? "text-blue-500"
+                      : "dark:text-secondary text-gray-500"
                   } flex items-center gap-1`}
               >
                 <Coins className="w-6 h-6" />
-                {totalPoolBone.toFixed(2)} BONE
+                {isPlaceholderLater ? "- BONE" : `${totalPoolBone.toFixed(2)} BONE`}
               </p>
               <h2 className="text-xl dark:text-secondary text-gray-500 flex items-center gap-1 font-normal ml-1">
                 <PiggyBank className="w-4 h-4" />
@@ -424,12 +439,14 @@ export default function GameCard({
             </div>
           )}
 
-          {(state === "upcoming" && stateLabelOverride !== "Later") && (
+          {(state === "upcoming") && (
             <div className="flex items-center gap-2 w-full">
               <Progress value={progress} className="w-full bg-primary/20" />
-              <p className="text-xs text-secondary break-keep w-auto">
-                {displayTime.split(" ")[0]}&nbsp;{displayTime.split(" ")[1]}
-              </p>
+              {!isPlaceholderLater && (
+                <p className="text-xs text-secondary break-keep w-auto">
+                  {displayTime.split(" ")[0]}&nbsp;{displayTime.split(" ")[1]}
+                </p>
+              )}
             </div>
           )}
           {state === "live" && (
@@ -438,7 +455,7 @@ export default function GameCard({
             </div>
           )}
         </CardContent>
-        {state === "upcoming" && stateLabelOverride !== "Later" && !betPlaced && (
+        {state === "upcoming" && !betPlaced && !isPlaceholderLater && (
           <CardFooter className="flex items-center justify-between gap-1">
             <PlacePredictionModal
               onSuccess={() => {
@@ -485,7 +502,32 @@ export default function GameCard({
             </PlacePredictionModal>
           </CardFooter>
         )}
-        {state === "upcoming" && stateLabelOverride !== "Later" && !betPlaced && (
+        {state === "upcoming" && !betPlaced && isPlaceholderLater && (
+          <CardFooter className="flex items-center justify-between gap-1">
+            <div className="relative flex-1">
+              <NeumorphButton
+                disabled
+                size={"medium"}
+                className="w-full text-lg rounded-xs bg-green-500 text-green-900 cursor-default disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <ChevronsUp className="w-8 h-8" />
+                <span className="text-lg font-bold">Higher</span>
+              </NeumorphButton>
+            </div>
+            <Separator orientation="vertical" className="h-full bg-gray-500" />
+            <div className="relative flex-1">
+              <NeumorphButton
+                disabled
+                size={"medium"}
+                className="w-full text-lg rounded-xs bg-red-500 text-white cursor-default disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <ChevronsDown className="w-8 h-8" />
+                <span className="text-lg font-bold">Lower</span>
+              </NeumorphButton>
+            </div>
+          </CardFooter>
+        )}
+        {state === "upcoming" && !betPlaced && (
           <CardFooter className="flex items-center justify-between -mt-2">
             {/* Higher (Bull) odds on the left to match button order */}
             <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
@@ -501,7 +543,7 @@ export default function GameCard({
             </div>
           </CardFooter>
         )}
-        {state === "upcoming" && stateLabelOverride !== "Later" && betPlaced && (
+        {state === "upcoming" && betPlaced && (
           <CardFooter className="flex items-center justify-between gap-1">
             <div className="relative flex-1">
               {userBetSide === "bull" && (
@@ -542,7 +584,7 @@ export default function GameCard({
             </div>
           </CardFooter>
         )}
-        {state === "upcoming" && stateLabelOverride !== "Later" && betPlaced && (
+        {state === "upcoming" && betPlaced && (
           <CardFooter className="flex items-center justify-between -mt-2">
             {/* Higher (Bull) odds on the left to match button order */}
             <div className="px-2 py-1 rounded-l-xs w-full flex-1 bg-green-700/25 text-green-500 flex items-center justify-center">
