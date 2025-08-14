@@ -66,7 +66,7 @@ export default function Home() {
     }
     const interval = setInterval(() => {
       refetch();
-    }, 30000); // 30 seconds
+    }, 10000); // 10 seconds
     return () => clearInterval(interval);
   }, [isLoading, refetch]);
 
