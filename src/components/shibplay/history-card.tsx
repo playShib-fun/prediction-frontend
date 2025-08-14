@@ -52,6 +52,15 @@ export default function HistoryCard({
     args: [BigInt(bet.roundId), address ?? ""],
   });
 
+  // Also read on-chain ledger to determine if rewards were already claimed
+  const { data: ledgerData } = useReadContract({
+    ...predictionConfig,
+    functionName: "ledger",
+    args: [BigInt(bet.roundId), address ?? ""],
+  });
+  const isAlreadyClaimedOnChain = Boolean((ledgerData as any)?.[2]);
+  const effectiveClaimed = Boolean(isClaimed) || isAlreadyClaimedOnChain;
+
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -72,8 +81,8 @@ export default function HistoryCard({
     if (activeFilter === "winners" || activeFilter === "losers") {
       if (roundStatus !== "ended") return false;
       return activeFilter === "winners"
-        ? Boolean(isClaimable) || isClaimed
-        : !Boolean(isClaimable) && !isClaimed;
+        ? Boolean(isClaimable) || effectiveClaimed
+        : !Boolean(isClaimable) && !effectiveClaimed;
     }
 
     if (activeFilter === "calculating") return roundStatus === "calculating";
@@ -200,7 +209,7 @@ export default function HistoryCard({
           <CardFooter className="p-4">
             <div className="w-full bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl border border-gray-700/50 p-4">
               <div className="flex flex-col gap-4">
-                {!isClaimed && (
+                {!effectiveClaimed && (
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
                       <BoneLoadingState
@@ -214,14 +223,14 @@ export default function HistoryCard({
                     <div>
                       <p className="text-base font-medium text-gray-200">
                         {Boolean(isClaimable)
-                          ? isClaimed
+                          ? effectiveClaimed
                             ? "Winner! (Claimed)"
                             : "Winner!"
                           : "Better luck next time"}
                       </p>
                       <p className="text-sm text-gray-400">
                         {Boolean(isClaimable)
-                          ? isClaimed
+                          ? effectiveClaimed
                             ? "Rewards already claimed"
                             : "Rewards available to claim"
                           : "No rewards for this round"}
@@ -230,7 +239,7 @@ export default function HistoryCard({
                   </div>
                 )}
 
-                {Boolean(isClaimable) && !isClaimed && !isSuccess && (
+                {Boolean(isClaimable) && !effectiveClaimed && !isSuccess && (
                   <div className="flex justify-center">
                     <NeumorphButton
                       size="large"
@@ -247,7 +256,7 @@ export default function HistoryCard({
                   </div>
                 )}
 
-                {isClaimed && (
+                {effectiveClaimed && (
                   <div className="flex flex-col items-center gap-3">
                     {/* Success Animation Container */}
                     <div className="relative">
