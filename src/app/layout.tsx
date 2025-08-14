@@ -9,9 +9,37 @@ import { headers } from "next/headers";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Play Shib",
-  description: "Play Shib",
+  metadataBase: new URL("https://playshib.fun"),
+  title: {
+    default: "ShibPlay — Predict BONE price on Shibarium",
+    template: "%s | ShibPlay",
+  },
+  description:
+    "Play Shib on Shibarium: predict BONE price in 5‑minute rounds. Place bullish or bearish bets, view live odds and claim rewards.",
+  applicationName: "ShibPlay",
   manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/icon.png" }],
+    apple: [{ url: "/apple-touch-icon.png" }],
+    shortcut: [{ url: "/favicon.ico" }],
+  },
+  openGraph: {
+    title: "ShibPlay — Predict BONE price on Shibarium",
+    description:
+      "Predict BONE price in 5‑minute rounds on Shibarium. Live odds, history, claims.",
+    url: "/",
+    siteName: "ShibPlay",
+    images: [{ url: "/images/shibplay-logo.png", width: 512, height: 512 }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ShibPlay — Predict BONE price on Shibarium",
+    description:
+      "Predict BONE price in 5‑minute rounds on Shibarium. Live odds, history, claims.",
+    images: ["/images/shibplay-logo.png"],
+  },
 };
 
 export const viewport: Viewport = {
