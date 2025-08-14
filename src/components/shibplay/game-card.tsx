@@ -24,7 +24,7 @@ import {
 } from "../ui/card";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ShineBorder } from "../magicui/shine-border";
 import { motion } from "motion/react";
@@ -33,9 +33,11 @@ import {
   useRound,
   useBetBears,
   useBetBulls,
-  useClaims,
 } from "@/hooks/use-prediction-data";
-import { useFormattedCurrentPrice } from "@/hooks/use-bone-price";
+import {
+  useFormattedCurrentPrice,
+  useFormattedLatestPrice,
+} from "@/hooks/use-bone-price";
 import PlacePredictionModal from "./place-prediction-modal";
 import { useWalletConnection } from "@/hooks/use-wallet";
 import BoneLoadingState from "./bone-loading-state";
@@ -43,6 +45,18 @@ import BoneLoadingState from "./bone-loading-state";
 import AnimatedOdds from "./animated-odds";
 import useOddsAnimation from "@/hooks/use-odds-animation";
 import { useRealTimeOdds } from "@/hooks/use-real-time-odds";
+import {
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { predictionConfig } from "@/lib/contracts/prediction";
+import { toast } from "sonner";
+import {
+  useLiveRoundTimerStore,
+  useRoundTimerStore,
+  useTrophyAnimationStore,
+} from "@/stores";
 
 interface GameCardProps {
   roundId: number;
@@ -120,6 +134,9 @@ export default function GameCard({
   const { data: prevRound } = useRound((roundId - 1).toString());
   const [isCalculatingRewards, setIsCalculatingRewards] = useState(false);
   const calculatingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [oracleWindowStartMs, setOracleWindowStartMs] = useState<number | null>(
+    null
+  );
 
   // Get end round data for ended rounds
   // const { data: endRound } = useEndRound(roundId.toString());
@@ -135,6 +152,26 @@ export default function GameCard({
   }, []);
 
   // removed periodic refetch for current price
+
+  // Latest oracle update timestamp (ms)
+  const { data: latestPriceData } = useFormattedLatestPrice();
+  const updateTimestampMs = useMemo(() => {
+    return latestPriceData?.timestamp?.getTime();
+  }, [latestPriceData]);
+
+  // Freeze the first seen oracle update timestamp for the live round to avoid sliding window
+  useEffect(() => {
+    if (state === "live" && updateTimestampMs && !oracleWindowStartMs) {
+      setOracleWindowStartMs(updateTimestampMs);
+    }
+  }, [state, updateTimestampMs, oracleWindowStartMs]);
+
+  // Reset frozen window when leaving live or changing rounds
+  useEffect(() => {
+    if (state !== "live") {
+      setOracleWindowStartMs(null);
+    }
+  }, [state, roundId]);
 
   const totalPoolBone = useMemo(() => {
     const bear = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
@@ -203,32 +240,110 @@ export default function GameCard({
   // connected wallet address
   const { address } = useWalletConnection();
 
-  const { data: claimableBets } = useClaims({
-    sender: address ?? "",
-    roundId: roundId.toString(),
+  // On-chain claimable status for this round and user
+  const {
+    data: isClaimable,
+    refetch: refetchIsClaimable,
+    isLoading: isClaimableLoading,
+  } = useReadContract({
+    ...predictionConfig,
+    functionName: "claimable",
+    args: [BigInt(roundId), address ?? ""],
   });
 
-  const isClaimable = useMemo(() => {
-    return claimableBets?.length && claimableBets.length > 0;
-  }, [claimableBets]);
+  // On-chain ledger to detect existing bet and claimed status
+  const { data: ledgerData } = useReadContract({
+    ...predictionConfig,
+    functionName: "ledger",
+    args: [BigInt(roundId), address ?? ""],
+  });
+
+  const hasOnChainBet = useMemo(() => {
+    try {
+      // ledgerData[1] is amount (bigint)
+      const amount = ledgerData && (ledgerData as any)[1];
+      if (typeof amount === "bigint") {
+        return amount > BigInt(0);
+      }
+      if (typeof amount === "number") {
+        return amount > 0;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [ledgerData]);
+
+  const isAlreadyClaimed = useMemo(() => {
+    try {
+      // ledgerData[2] is claimed (bool)
+      return Boolean(ledgerData && (ledgerData as any)[2]);
+    } catch {
+      return false;
+    }
+  }, [ledgerData]);
 
   useEffect(() => {
-    console.log(`roundId: ${roundId} isClaimable: ${isClaimable}`);
-  }, [isClaimable]);
+    if (state === "ended" && address) {
+      refetchIsClaimable();
+    }
+  }, [state, address, refetchIsClaimable]);
 
   const betPlaced = useMemo(() => {
     if (!address) {
       return false;
     }
-    return (
+    const subgraphPlaced =
       betBears?.some(
         (bet) => bet.sender.toLowerCase() === address.toLowerCase()
       ) ||
       betBulls?.some(
         (bet) => bet.sender.toLowerCase() === address.toLowerCase()
-      )
-    );
-  }, [address, betBears, betBulls]);
+      );
+    return Boolean(subgraphPlaced || hasOnChainBet);
+  }, [address, betBears, betBulls, hasOnChainBet]);
+
+  // Claim rewards
+  const {
+    writeContract,
+    data: claimHash,
+    isPending: isClaimPending,
+  } = useWriteContract();
+  const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } =
+    useWaitForTransactionReceipt({
+      hash: claimHash,
+    });
+
+  const handleClaim = () => {
+    if (!address) return;
+    try {
+      writeContract({
+        ...predictionConfig,
+        functionName: "claim",
+        args: [[BigInt(roundId)]],
+      });
+    } catch (error) {
+      toast.error("Failed to submit claim transaction");
+    }
+  };
+
+  const { setIsActive: setIsTrophyActive } = useTrophyAnimationStore();
+
+  useEffect(() => {
+    if (isClaimSuccess) {
+      setIsTrophyActive(true);
+      refetchRound();
+      refetchBetBears();
+      refetchBetBulls();
+      refetchIsClaimable();
+    }
+  }, [
+    isClaimSuccess,
+    refetchRound,
+    refetchBetBears,
+    refetchBetBulls,
+    refetchIsClaimable,
+  ]);
 
   // Determine which side the user bet on for highlighting
   const userBetSide = useMemo<"bull" | "bear" | null>(() => {
@@ -250,43 +365,27 @@ export default function GameCard({
     return null;
   }, [address, betBears, betBulls]);
 
+  const setRound = useRoundTimerStore((s) => s.setRound);
+  const setProgressPct = useRoundTimerStore((s) => s.setProgressPct);
+  const setTimeLeftMs = useRoundTimerStore((s) => s.setTimeLeftMs);
+  const timeLeftMs = useRoundTimerStore((s) => s.timeLeftMs);
+
   function calculateProgress() {
-    // Determine base start time from allRounds data
-    const baseStartMs = round?.startTimeStamp
-      ? Number(round.startTimeStamp) * 1000 // ensure ms
-      : undefined;
+    // Only compute for live; upcoming cards derive from global store
+    if (state !== "live") return;
 
-    let effectiveStartMs = baseStartMs;
-
-    // For placeholder or missing data, approximate using previous round start time
-    if (isPlaceholderLater || !Number.isFinite(effectiveStartMs as number)) {
-      const prevStartMs = prevRound?.startTimeStamp
-        ? Number(prevRound.startTimeStamp) * 1000
-        : Date.now();
-      const offset = typeof _placeholderOffset === "number"
-        ? _placeholderOffset
-        : 1;
-      effectiveStartMs = prevStartMs + offset * 5 * 60 * 1000;
-    }
-
-    // Fallback if still undefined
-    const startMs = (effectiveStartMs as number) ?? Date.now();
-
-    let segmentStart = startMs;
-    let endTime = startMs + 5 * 60 * 1000; // upcoming window: 5 minutes
-
-    if (state === "live") {
-      const lockMs = startMs + 5 * 60 * 1000; // lock occurs 5 minutes after start
-      segmentStart = lockMs;
-      endTime = lockMs + 5 * 60 * 1000; // live window: next 5 minutes
-    }
-
+    const fiveMinutesMs = 5 * 60 * 1000;
+    const startTimeStamp = Number(round?.updateTimeStamp);
     const now = Date.now();
-    const totalDuration = Math.max(1, endTime - segmentStart);
-    const elapsed = Math.max(0, Math.min(now - segmentStart, totalDuration));
+    const endTime = startTimeStamp + fiveMinutesMs;
+
+    const elapsed = Math.max(0, Math.min(now - startTimeStamp, fiveMinutesMs));
     const timeLeftMs = Math.max(0, endTime - now);
 
-    const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+    const progress = Math.min(
+      100,
+      Math.max(0, (elapsed / fiveMinutesMs) * 100)
+    );
 
     const minutes = Math.floor(timeLeftMs / 60000);
     const seconds = Math.floor((timeLeftMs % 60000) / 1000);
@@ -296,25 +395,48 @@ export default function GameCard({
     setDisplayTime(timeLeft);
     setTimeLeftMsState(timeLeftMs);
 
-    // Show calculating animation for 15s after live duration ends
-    if (state === "live" && timeLeftMs <= 0 && !isCalculatingRewards) {
+    setProgressPct(progress);
+    setTimeLeftMs(timeLeftMs);
+    setRound(roundId);
+
+    if (timeLeftMs <= 0 && !isCalculatingRewards) {
       setIsCalculatingRewards(true);
-      if (calculatingTimerRef.current) {
-        clearTimeout(calculatingTimerRef.current);
-      }
-      calculatingTimerRef.current = setTimeout(() => {
-        setIsCalculatingRewards(false);
-        calculatingTimerRef.current = null;
-      }, 15000);
+      refetchRound();
     }
   }
+
+  // Components to display upcoming progress/time using the global store
+  const UpcomingProgress = memo(function UpcomingProgress() {
+    const progressPct = useRoundTimerStore((s) => s.progressPct);
+    return <Progress value={progressPct} className="w-full bg-primary/20" />;
+  });
+
+  const UpcomingTimeLeft = memo(function UpcomingTimeLeft() {
+    const timeLeftMs = useRoundTimerStore((s) => s.timeLeftMs);
+    const minutes = Math.floor(timeLeftMs / 60000);
+    const seconds = Math.floor((timeLeftMs % 60000) / 1000)
+      .toString()
+      .padStart(2, "0");
+    return (
+      <p className="text-xs text-secondary break-keep w-auto">
+        {minutes}m&nbsp;{seconds}s
+      </p>
+    );
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
       calculateProgress();
     }, 1000);
     return () => clearInterval(interval);
-  }, [round, prevRound, state, isPlaceholderLater]);
+  }, [
+    round,
+    prevRound,
+    state,
+    isPlaceholderLater,
+    updateTimestampMs,
+    oracleWindowStartMs,
+  ]);
 
   // Periodically refresh round data for upcoming card to update prize pool and odds
   useEffect(() => {
@@ -556,12 +678,9 @@ export default function GameCard({
 
           {state === "upcoming" && (
             <div className="flex items-center gap-2 w-full">
-              <Progress value={progress} className="w-full bg-primary/20" />
-              {!isPlaceholderLater && (
-                <p className="text-xs text-secondary break-keep w-auto">
-                  {displayTime.split(" ")[0]}&nbsp;{displayTime.split(" ")[1]}
-                </p>
-              )}
+              {/* For upcoming, use global live store's progress/time left */}
+              <UpcomingProgress />
+              {!isPlaceholderLater && <UpcomingTimeLeft />}
             </div>
           )}
           {state === "live" && (
@@ -584,7 +703,7 @@ export default function GameCard({
               initialDirection="higher"
             >
               <NeumorphButton
-                disabled={betPlaced || timeLeftMsState <= 10_000}
+                disabled={betPlaced || timeLeftMs <= 10_000}
                 loading={isLoading}
                 size={"medium"}
                 className="flex-1 rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-pointer text-lg disabled:opacity-50 disabled:cursor-not-allowed"
@@ -608,7 +727,7 @@ export default function GameCard({
               <NeumorphButton
                 loading={isLoading}
                 size={"medium"}
-                disabled={betPlaced || timeLeftMsState <= 10_000}
+                disabled={betPlaced || timeLeftMs <= 10_000}
                 className="flex-1 text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {!isLoading && <ChevronsDown className="w-8 h-8" />}
@@ -669,19 +788,15 @@ export default function GameCard({
         {state === "upcoming" && betPlaced && (
           <CardFooter className="flex items-center justify-between gap-1">
             <div className="relative flex-1">
-              {userBetSide === "bull" && (
+              {/* {userBetSide === "bull" && (
                 <span className="absolute -top-3 left-2 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full bg-green-500 text-green-900 shadow-[0_0_12px_rgba(34,197,94,0.7)]">
                   Your bet
                 </span>
-              )}
+              )} */}
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`w-full text-lg rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-default disabled:cursor-not-allowed ${
-                  userBetSide === "bull"
-                    ? "disabled:opacity-100 ring-4 ring-green-400 shadow-[0_0_24px_rgba(34,197,94,0.65)] scale-[1.02] animate-pulse"
-                    : ""
-                }`}
+                className={`w-full text-lg rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-default disabled:cursor-not-allowed`}
               >
                 <ChevronsUp className="w-8 h-8" />
                 <span className="text-lg font-bold">Higher</span>
@@ -689,19 +804,15 @@ export default function GameCard({
             </div>
             <Separator orientation="vertical" className="h-full bg-gray-500" />
             <div className="relative flex-1">
-              {userBetSide === "bear" && (
+              {/* {userBetSide === "bear" && (
                 <span className="absolute -top-3 left-2 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.7)]">
                   Your bet
                 </span>
-              )}
+              )} */}
               <NeumorphButton
                 disabled
                 size={"medium"}
-                className={`w-full text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-default disabled:cursor-not-allowed ${
-                  userBetSide === "bear"
-                    ? "disabled:opacity-100 ring-4 ring-red-400 shadow-[0_0_24px_rgba(239,68,68,0.65)] scale-[1.02] animate-pulse"
-                    : ""
-                }`}
+                className={`w-full text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-default disabled:cursor-not-allowed`}
               >
                 <ChevronsDown className="w-8 h-8" />
                 <span className="text-lg font-bold">Lower</span>
@@ -774,32 +885,25 @@ export default function GameCard({
             </CardFooter>
 
             {betPlaced &&
-              (isClaimable ? (
+              (Boolean(isClaimable) ? (
                 <CardFooter className="flex items-center justify-center -mt-2 p-4">
-                  <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-lg border border-indigo-500/20 p-4 w-full">
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="animate-pulse">
-                        <CheckCircle className="w-6 h-6 text-green-400" />
-                      </div>
-                      <p className="text-base font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                        You have won this round
-                      </p>
-                    </div>
-                  </div>
+                  <NeumorphButton
+                    size="medium"
+                    className="w-full max-w-xs bg-green-500 hover:bg-green-600 text-green-900 hover:text-white font-bold cursor-pointer"
+                    onClick={handleClaim}
+                    disabled={isClaimPending || isClaimConfirming}
+                  >
+                    {isClaimPending
+                      ? "Preparing Claim..."
+                      : isClaimConfirming
+                      ? "Claiming Rewards..."
+                      : "Claim Rewards"}
+                  </NeumorphButton>
                 </CardFooter>
+              ) : isAlreadyClaimed ? (
+                <></>
               ) : (
-                <CardFooter className="flex items-center justify-center -mt-2 p-4">
-                  <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-lg border border-indigo-500/20 p-4 w-full">
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="animate-pulse">
-                        <XCircle className="w-6 h-6 text-red-400" />
-                      </div>
-                      <p className="text-base font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                        You have not won this round
-                      </p>
-                    </div>
-                  </div>
-                </CardFooter>
+                state === "ended" && !isClaimableLoading && <></>
               ))}
           </>
         )}

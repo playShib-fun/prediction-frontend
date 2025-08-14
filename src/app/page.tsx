@@ -10,20 +10,33 @@ import {
 import { useEffect, useState } from "react";
 import { useRounds } from "@/hooks/use-prediction-data";
 import Loading from "@/components/shibplay/loading";
+import Subheader from "@/components/shibplay/subheader";
+import TrophyAnimation from "@/components/shibplay/trophy-animation";
+import { useTrophyAnimationStore } from "@/stores";
 
 export default function Home() {
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [selected, setSelected] = useState(1);
   const [isInitialScroll, setIsInitialScroll] = useState(true);
-  const { data: allRounds, isLoading, refetch } = useRounds({
+  const {
+    data: allRounds,
+    isLoading,
+    refetch,
+  } = useRounds({
     limit: 5,
     sortBy: "startTimeStamp",
     ascending: false,
   });
 
+  const { isActive } = useTrophyAnimationStore();
+
   const getGameState = (status?: string) => {
     const normalized = (status || "upcoming").toLowerCase();
-    if (normalized === "live" || normalized === "ended" || normalized === "upcoming") {
+    if (
+      normalized === "live" ||
+      normalized === "ended" ||
+      normalized === "upcoming"
+    ) {
       return normalized as "live" | "ended" | "upcoming";
     }
     return "upcoming";
@@ -76,6 +89,7 @@ export default function Home() {
 
   return (
     <>
+      <Subheader />
       <main className="h-full flex-1 w-full flex items-center justify-center transition-all duration-300 ease-in-out pt-2 md:pt-6 pb-24 md:pb-0">
         {isLoading ? (
           <Loading />
@@ -101,7 +115,11 @@ export default function Home() {
                     roundId={Number(round.roundId)}
                     state={getGameState(round.status)}
                     active={selected === index}
-                    stateLabelOverride={getGameState(round.status) === "upcoming" ? "Next" : undefined}
+                    stateLabelOverride={
+                      getGameState(round.status) === "upcoming"
+                        ? "Next"
+                        : undefined
+                    }
                   />
                 </CarouselItem>
               ))}
@@ -110,7 +128,7 @@ export default function Home() {
                   <CarouselItem
                     key={`round-later-1-${nextEpochBase}`}
                     className={`md:basis-1/4 lg:basis-2/3 transition-all duration-300 ease-in-out ${
-                      selected === (totalRounds + 1)
+                      selected === totalRounds + 1
                         ? "opacity-100 scale-100"
                         : "opacity-75 scale-75"
                     }`}
@@ -126,7 +144,7 @@ export default function Home() {
                   <CarouselItem
                     key={`round-later-2-${nextEpochBase}`}
                     className={`md:basis-1/4 lg:basis-2/3 transition-all duration-300 ease-in-out ${
-                      selected === (totalRounds + 2)
+                      selected === totalRounds + 2
                         ? "opacity-100 scale-100"
                         : "opacity-75 scale-75"
                     }`}
@@ -141,11 +159,11 @@ export default function Home() {
                   </CarouselItem>
                 </>
               )}
-
             </CarouselContent>
           </Carousel>
         )}
       </main>
+      {isActive && <TrophyAnimation />}
     </>
   );
 }

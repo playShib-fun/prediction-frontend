@@ -17,6 +17,7 @@ import { useNativeBalance, useWalletConnection } from "@/hooks/use-wallet";
 import { predictionConfig } from "@/lib/contracts/prediction";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { toast } from "sonner";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 interface PlacePredictionModalProps {
   roundId: number;
@@ -42,6 +43,8 @@ export default function PlacePredictionModal({
   const MIN_BET = 10;
 
   const { isConnected } = useWalletConnection();
+  const { openConnectModal } = useConnectModal();
+
   const { data: balance, isLoading: isBalanceLoading } = useNativeBalance();
   const {
     writeContract,
@@ -311,7 +314,7 @@ export default function PlacePredictionModal({
           <Button
             onClick={handleBet}
             disabled={!isValidAmount || !isConnected || isSubmitting}
-            className={`w-full h-12 text-lg font-bold transition-all duration-300 ${
+            className={`w-full h-12 text-lg font-bold transition-all duration-300 cursor-pointer disabled:cursor-not-allowed ${
               isValidAmount && isConnected
                 ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white"
                 : "bg-gray-600/50 text-gray-400 cursor-not-allowed"
@@ -328,9 +331,9 @@ export default function PlacePredictionModal({
           </Button>
 
           {!isConnected && (
-            <p className="text-center text-sm text-red-400 mt-2">
+            <button className="text-center text-sm text-red-400 mt-2">
               Please connect your wallet to place a bet
-            </p>
+            </button>
           )}
         </DrawerFooter>
         <DrawerClose

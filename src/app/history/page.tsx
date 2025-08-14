@@ -1,14 +1,7 @@
 "use client";
 
 import { useWalletConnection } from "@/hooks/use-wallet";
-import {
-  useBetBears,
-  useBetBulls,
-  useClaims,
-  useEndRounds,
-  useLockRounds,
-  useRewardsCalculated,
-} from "@/hooks/use-prediction-data";
+import { useBetBears, useBetBulls, useClaims, useRounds } from "@/hooks/use-prediction-data";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useEffect, useMemo, useState } from "react";
@@ -73,26 +66,14 @@ export default function History() {
   });
 
   const {
-    data: endRounds,
-    isLoading: isEndRoundsLoading,
-    refetch: refetchEndRounds,
-  } = useEndRounds();
-  const {
-    data: lockRounds,
-    isLoading: isLockRoundsLoading,
-    refetch: refetchLockRounds,
-  } = useLockRounds();
-  const {
-    data: rewardsCalculated,
-    isLoading: isRewardsCalculatedLoading,
-    refetch: refetchRewardsCalculated,
-  } = useRewardsCalculated();
+    data: allRounds,
+    isLoading: isRoundsLoading,
+    refetch: refetchRounds,
+  } = useRounds();
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refetchEndRounds();
-      refetchLockRounds();
-      refetchRewardsCalculated();
+      refetchRounds();
       refetchClaims();
       refetchBearBets();
       refetchBullBets();
@@ -107,6 +88,26 @@ export default function History() {
     ];
     return bets.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
   }, [bearBets, bullBets]);
+
+  // Build round status map from AllRounds and helper accessor
+  const roundStatusMap = useMemo(() => {
+    const map = new Map<string, "upcoming" | "running" | "ended">();
+    (allRounds ?? []).forEach((r: any) => {
+      const normalized = String(r.status || "").toLowerCase();
+      const status: "upcoming" | "running" | "ended" =
+        normalized === "live"
+          ? "running"
+          : normalized === "ended"
+          ? "ended"
+          : "upcoming";
+      map.set(String(r.roundId), status);
+    });
+    return map;
+  }, [allRounds]);
+
+  function getRoundStatus(roundId: string) {
+    return roundStatusMap.get(String(roundId)) ?? "upcoming";
+  }
 
   // Calculate enhanced bet records with outcome mapping expected by utilities
   const betsWithStats = useMemo(() => {
@@ -214,40 +215,9 @@ export default function History() {
     sort.direction,
   ]);
 
-  function isRoundLocked(roundId: string) {
-    return lockRounds?.some((lock) => lock.epoch === roundId);
-  }
+  
 
-  function hasRoundEnded(roundId: string) {
-    return endRounds?.some((end) => end.epoch === roundId);
-  }
-
-  function isRoundRewardsCalculated(roundId: string) {
-    return rewardsCalculated?.some((reward) => reward.roundId === roundId);
-  }
-
-  function getRoundStatus(roundId: string) {
-    if (hasRoundEnded(roundId)) {
-      if (isRoundRewardsCalculated(roundId)) {
-        return "ended";
-      } else {
-        return "calculating";
-      }
-    } else if (isRoundLocked(roundId)) {
-      return "running";
-    } else {
-      return "upcoming";
-    }
-  }
-
-  if (
-    isEndRoundsLoading ||
-    isClaimsLoading ||
-    isBearBetsLoading ||
-    isBullBetsLoading ||
-    isLockRoundsLoading ||
-    isRewardsCalculatedLoading
-  ) {
+  if (isRoundsLoading || isClaimsLoading || isBearBetsLoading || isBullBetsLoading) {
     return <Loading />;
   }
 
@@ -329,13 +299,7 @@ export default function History() {
                       timestamp: bet.timestamp,
                       transactionHash: bet.transactionHash,
                     }}
-                    roundStatus={
-                      bet.status === "won" || bet.status === "lost"
-                        ? "ended"
-                        : bet.status === "calculating"
-                        ? "calculating"
-                        : "running"
-                    }
+                    roundStatus={getRoundStatus(bet.roundId)}
                     index={index}
                     isClaimed={bet.status === "won"}
                     profitLoss={bet.profit}
@@ -377,13 +341,7 @@ export default function History() {
                 timestamp: bet.timestamp,
                 transactionHash: bet.transactionHash,
               }}
-              roundStatus={
-                bet.status === "won" || bet.status === "lost"
-                  ? "ended"
-                  : bet.status === "calculating"
-                  ? "calculating"
-                  : "running"
-              }
+              roundStatus={getRoundStatus(bet.roundId)}
               index={index}
               isClaimed={bet.status === "won"}
               profitLoss={bet.profit}
