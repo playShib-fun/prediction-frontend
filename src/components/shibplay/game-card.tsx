@@ -857,8 +857,7 @@ export default function GameCard({
               (Boolean(isClaimable) ? (
                 <CardFooter className="flex items-center justify-center -mt-2 p-4">
                   <NeumorphButton
-                    size="medium"
-                    className="w-full max-w-xs bg-green-500 hover:bg-green-600 text-green-900 hover:text-white font-bold cursor-pointer"
+                    className="flex-1 rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-default text-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                     onClick={handleClaim}
                     disabled={isClaimPending || isClaimConfirming}
                   >
