@@ -119,9 +119,10 @@ export default function History() {
       let status: BetRecord["status"] = "pending";
       if (roundStatus === "ended") {
         status = isClaimed ? "won" : "lost";
-      } else if (roundStatus === "calculating") {
-        status = "calculating";
       } else if (roundStatus === "running") {
+        status = "pending";
+      } else {
+        // upcoming
         status = "pending";
       }
 

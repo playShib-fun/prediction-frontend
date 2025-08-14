@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, TowerControl } from "lucide-react";
-import { useLiveRoundTimerStore, useRoundTimerStore } from "@/stores";
+import { useRoundTimerStore } from "@/stores";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 

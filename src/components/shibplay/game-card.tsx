@@ -2,7 +2,6 @@
 
 import {
   ChartArea,
-  CheckCircle,
   ChevronsDown,
   ChevronsUp,
   Clock,
@@ -12,7 +11,6 @@ import {
   PiggyBank,
   TowerControl,
   Trophy,
-  XCircle,
 } from "lucide-react";
 import {
   Card,
@@ -52,11 +50,7 @@ import {
 } from "wagmi";
 import { predictionConfig } from "@/lib/contracts/prediction";
 import { toast } from "sonner";
-import {
-  useLiveRoundTimerStore,
-  useRoundTimerStore,
-  useTrophyAnimationStore,
-} from "@/stores";
+import { useRoundTimerStore, useTrophyAnimationStore } from "@/stores";
 
 interface GameCardProps {
   roundId: number;
@@ -78,8 +72,6 @@ export default function GameCard({
     state === "upcoming" && stateLabelOverride === "Later";
 
   const [progress, setProgress] = useState(0);
-  const [displayTime, setDisplayTime] = useState("0m 0s");
-  const [timeLeftMsState, setTimeLeftMsState] = useState(0);
   const { data: betBears, refetch: refetchBetBears } = useBetBears({
     roundId: roundId.toString(),
   });
@@ -345,25 +337,7 @@ export default function GameCard({
     refetchIsClaimable,
   ]);
 
-  // Determine which side the user bet on for highlighting
-  const userBetSide = useMemo<"bull" | "bear" | null>(() => {
-    if (!address) return null;
-    if (
-      betBulls?.some(
-        (bet) => bet.sender.toLowerCase() === address.toLowerCase()
-      )
-    ) {
-      return "bull";
-    }
-    if (
-      betBears?.some(
-        (bet) => bet.sender.toLowerCase() === address.toLowerCase()
-      )
-    ) {
-      return "bear";
-    }
-    return null;
-  }, [address, betBears, betBulls]);
+  // Note: userBetSide UI is currently disabled; keeping minimal logic removed to avoid unused var.
 
   const setRound = useRoundTimerStore((s) => s.setRound);
   const setProgressPct = useRoundTimerStore((s) => s.setProgressPct);
@@ -387,13 +361,8 @@ export default function GameCard({
       Math.max(0, (elapsed / fiveMinutesMs) * 100)
     );
 
-    const minutes = Math.floor(timeLeftMs / 60000);
-    const seconds = Math.floor((timeLeftMs % 60000) / 1000);
-    const timeLeft = `${minutes}m ${seconds}s`;
-
     setProgress(Math.round(progress));
-    setDisplayTime(timeLeft);
-    setTimeLeftMsState(timeLeftMs);
+    // local state for live progress only
 
     setProgressPct(progress);
     setTimeLeftMs(timeLeftMs);

@@ -17,7 +17,6 @@ import { useNativeBalance, useWalletConnection } from "@/hooks/use-wallet";
 import { predictionConfig } from "@/lib/contracts/prediction";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { toast } from "sonner";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 interface PlacePredictionModalProps {
   roundId: number;
@@ -43,7 +42,6 @@ export default function PlacePredictionModal({
   const MIN_BET = 10;
 
   const { isConnected } = useWalletConnection();
-  const { openConnectModal } = useConnectModal();
 
   const { data: balance, isLoading: isBalanceLoading } = useNativeBalance();
   const {
