@@ -110,3 +110,23 @@ export const useTrophyAnimationStore = create<TrophyAnimationStore>()(
     setIsActive: (isActive) => set({ isActive }),
   })
 );
+
+// Carousel navigation store to allow global prev/next from UI controls like Subheader
+type CarouselNavStore = {
+  isReady: boolean;
+  scrollPrev: () => void;
+  scrollNext: () => void;
+  setHandlers: (handlers: { scrollPrev: () => void; scrollNext: () => void } | null) => void;
+};
+
+export const useCarouselNavStore = create<CarouselNavStore>()((set) => ({
+  isReady: false,
+  scrollPrev: () => {},
+  scrollNext: () => {},
+  setHandlers: (handlers) =>
+    set({
+      isReady: Boolean(handlers),
+      scrollPrev: handlers?.scrollPrev ?? (() => {}),
+      scrollNext: handlers?.scrollNext ?? (() => {}),
+    }),
+}));
