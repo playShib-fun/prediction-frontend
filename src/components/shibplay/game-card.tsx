@@ -166,10 +166,13 @@ export default function GameCard({
   }, [state, roundId]);
 
   const totalPoolBone = useMemo(() => {
+    if (state === "upcoming") {
+      return realTimeOdds.totalPool;
+    }
     const bear = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
     const bull = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
     return bear + bull;
-  }, [round]);
+  }, [state, realTimeOdds, round]);
 
   // Calculate price difference for ended rounds using values directly from round
   const priceDifference = useMemo(() => {
@@ -514,7 +517,7 @@ export default function GameCard({
         </div>
         */}
         {state === "live" && isCalculatingRewards && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/90 backdrop-blur-sm">
             <BoneLoadingState
               text="Calculating rewards..."
               size="lg"
