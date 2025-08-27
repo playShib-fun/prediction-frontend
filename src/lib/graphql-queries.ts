@@ -9,6 +9,7 @@ import type {
   BetBear,
   Round,
 } from "./graphql-client";
+import { getWsClient } from '@/lib/gql-ws-client';
 
 // GraphQL Queries
 const QUERIES = {
@@ -305,6 +306,25 @@ const QUERIES = {
       }
     }
   `,
+
+  GET_ROUND_BY_ID_WSS: `
+    subscription($id: BigInt!) {
+      rounds(where: { roundId_eq: $id }, limit: 1) {
+        bearAmount
+        bullAmount
+        endPrice
+        id
+        lockPrice
+        oracleRoundInd
+        pricePool
+        roundId
+        startTimeStamp
+        status
+        updateTimeStamp
+        users
+      }
+    }
+  `,
 };
 
 // API Functions
@@ -458,5 +478,60 @@ export const predictionApi = {
       { id }
     );
     return response.rounds?.[0] as Round;
+  },
+
+  getRoundByIdWSS: async (id: string): Promise<Round> => {
+    const client = getWsClient();
+    if (!client) {
+      const response = await graphqlClient.request<{ rounds: Round[] }>(
+        QUERIES.GET_ROUND_BY_ID,
+        { id }
+      );
+      return response.rounds?.[0] as Round;
+    }
+
+    return new Promise<Round>((resolve, reject) => {
+      let dispose: (() => void) | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+      const cleanup = () => {
+        try {
+          dispose?.();
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+        }
+      };
+
+      try {
+        dispose = client.subscribe(
+          { query: QUERIES.GET_ROUND_BY_ID_WSS, variables: { id } },
+          {
+            next: (ev: any) => {
+              const row = ev?.data?.rounds?.[0] as Round | undefined;
+              if (row) {
+                cleanup();
+                resolve(row);
+              }
+            },
+            error: (err) => {
+              cleanup();
+              reject(err);
+            },
+            complete: () => {
+              cleanup();
+              reject(new Error('Subscription completed without data'));
+            },
+          }
+        );
+
+        timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error('Subscription timed out'));
+        }, 15000);
+      } catch (err) {
+        cleanup();
+        reject(err as Error);
+      }
+    });
   },
 };

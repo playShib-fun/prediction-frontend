@@ -653,7 +653,7 @@ export const useRounds = (options?: {
 export const useRound = (id: string) => {
   return useQuery({
     queryKey: predictionQueryKeys.round(id),
-    queryFn: () => predictionApi.getRoundById(id),
+    queryFn: () => predictionApi.getRoundByIdWSS(id),
     enabled: !!id,
   });
 };
