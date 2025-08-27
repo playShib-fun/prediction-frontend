@@ -13,6 +13,7 @@ import Loading from "@/components/shibplay/loading";
 import Subheader from "@/components/shibplay/subheader";
 import TrophyAnimation from "@/components/shibplay/trophy-animation";
 import { useTrophyAnimationStore } from "@/stores";
+import { useCarouselNavStore } from "@/stores";
 
 export default function Home() {
   const [api, setApi] = useState<CarouselApi | null>(null);
@@ -58,6 +59,23 @@ export default function Home() {
     api.on("select", () => {
       setSelected(api.selectedScrollSnap());
     });
+
+    // Expose prev/next handlers to global store for Subheader controls
+    const navStore = useCarouselNavStore.getState();
+    useCarouselNavStore.setState({
+      isReady: true,
+      scrollPrev: () => api.scrollPrev(),
+      scrollNext: () => api.scrollNext(),
+    });
+
+    return () => {
+      // Clear handlers when carousel unmounts or api changes
+      useCarouselNavStore.setState({
+        isReady: false,
+        scrollPrev: navStore.scrollPrev,
+        scrollNext: navStore.scrollNext,
+      });
+    };
   }, [api, allRounds, isInitialScroll]);
 
   useEffect(() => {

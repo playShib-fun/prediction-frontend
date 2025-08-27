@@ -57,7 +57,7 @@ export default async function RootLayout({
     // add font to className, also add antialiased and dark mode
     <html
       lang="en"
-      className={`${GeistSans.className} antialiased dark:bg-gray-950`}
+      className={`dark ${GeistSans.className} antialiased dark:bg-gray-950`}
       suppressHydrationWarning
     >
       <body className="bg-gray-100 dark:bg-gray-950 relative">
@@ -74,8 +74,10 @@ if ('serviceWorker' in navigator) {
         />
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          forcedTheme="dark"
+          themes={["dark"]}
+          enableSystem={false}
+          defaultTheme="dark"
           disableTransitionOnChange
         >
           <Providers cookie={cookie}>
