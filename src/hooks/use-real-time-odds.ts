@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { getWsClient } from '@/lib/gql-ws-client';
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { getWsClient } from "@/lib/gql-ws-client";
 
 // ===== Tipi che già esporti =====
 export interface OddsData {
@@ -39,15 +39,27 @@ export interface UseRealTimeOddsReturn {
 }
 
 // ===== Util =====
+const fromWei = (val?: string | number | bigint) => {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === "bigint") return Number(val) / 1e18; // wei -> BONE
+  if (typeof val === "number") return val / 1e18;
+  const s = String(val).trim();
+  if (s === "") return 0;
+  if (/^\d+$/.test(s)) return Number(BigInt(s)) / 1e18; // wei -> BONE
+  // fallback
+  return parseFloat(s) || 0;
+};
+
 const calculateOdds = (
   bearAmount: string,
-  bullAmount: string
-): Omit<OddsData, 'lastUpdated'> => {
-  const bear = parseFloat(bearAmount || '0') / 1e18;
-  const bull = parseFloat(bullAmount || '0') / 1e18;
-  const total = bear + bull;
+  bullAmount: string,
+  pricePool?: string
+): Omit<OddsData, "lastUpdated"> => {
+  const bear = fromWei(bearAmount);
+  const bull = fromWei(bullAmount);
+  const total = pricePool != null ? fromWei(pricePool) : bear + bull;
 
-  if (total === 0) {
+  if (total <= 0) {
     return { bullOdds: 1.0, bearOdds: 1.0, totalPool: 0 };
   }
 
@@ -65,7 +77,7 @@ const calculateStaticOdds = (): OddsData => ({
 });
 
 /**
- * Visibility detection (uguale alla tua versione, rinominata in “useVisibilityOptimizedPolling”)
+ * Visibility detection
  */
 export const useVisibilityOptimizedPolling = (
   options: UseVisibilityOptimizedPollingOptions
@@ -91,7 +103,7 @@ export const useVisibilityOptimizedPolling = (
       setIsVisible(true);
       return;
     }
-    if (typeof IntersectionObserver === 'undefined') {
+    if (typeof IntersectionObserver === "undefined") {
       setIsVisible(true);
       return;
     }
@@ -100,7 +112,7 @@ export const useVisibilityOptimizedPolling = (
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold, rootMargin: '50px' }
+      { threshold, rootMargin: "50px" }
     );
 
     observerRef.current.observe(elementRef.current);
@@ -112,14 +124,14 @@ export const useVisibilityOptimizedPolling = (
   return { isVisible: enabled ? isVisible : true, elementRef };
 };
 
-// ===== Sottoscrizione (live query) per il round =====
-// NB: openreader supporta live-queries via WS sullo stesso path /graphql
+// ===== Subscription (live query) per round =====
 const SUB_ROUND = /* GraphQL */ `
   subscription ($id: BigInt!) {
     rounds(where: { roundId_eq: $id }, limit: 1) {
       roundId
       bearAmount
       bullAmount
+      pricePool
       updateTimeStamp
     }
   }
@@ -128,7 +140,9 @@ const SUB_ROUND = /* GraphQL */ `
 /**
  * Hook realtime via WebSocket (graphql-ws)
  */
-export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOddsReturn => {
+export const useRealTimeOdds = (
+  options: UseRealTimeOddsOptions
+): UseRealTimeOddsReturn => {
   const {
     roundId,
     enabled,
@@ -143,7 +157,8 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
     threshold: visibilityThreshold,
   });
 
-  const shouldSubscribe = enabled && (enableVisibilityOptimization ? isVisible : true);
+  const shouldSubscribe =
+    enabled && (enableVisibilityOptimization ? isVisible : true);
 
   const [odds, setOdds] = useState<OddsData>(calculateStaticOdds());
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -160,17 +175,18 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
     };
   }, []);
 
-  // Attacca/detacha la subscription sul round
+  // Attach/detach the subscription for the round
   useEffect(() => {
     if (!roundId || !shouldSubscribe) {
-      // quando non attivo, rimaniamo “idle” senza error
       setIsLoading(false);
       return;
     }
 
     const client = getWsClient();
     if (!client) {
-      setError(new Error('WebSocket client unavailable (SSR or WS not supported).'));
+      setError(
+        new Error("WebSocket client unavailable (SSR or WS not supported).")
+      );
       return;
     }
 
@@ -181,17 +197,24 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
     let cancelled = false;
 
     unsub = client.subscribe(
-      { query: SUB_ROUND, variables: { id: roundId } }, // il server accetta BigInt come string
+      { query: SUB_ROUND, variables: { id: roundId } },
       {
         next: (ev: any) => {
           if (cancelled) return;
           const row = ev?.data?.rounds?.[0];
+          console.log("RT raw:", row);
+          console.log("RT parsed total:", fromWei(row?.pricePool));
+
           if (!row) return;
 
-          const computed = calculateOdds(row.bearAmount ?? '0', row.bullAmount ?? '0');
+          const computed = calculateOdds(
+            row.bearAmount ?? "0",
+            row.bullAmount ?? "0",
+            row.pricePool ?? undefined
+          );
+
           const nextOdds: OddsData = { ...computed, lastUpdated: Date.now() };
 
-          // trigger animazione “update” breve
           setIsAnimating(true);
           if (animTimerRef.current) clearTimeout(animTimerRef.current);
           animTimerRef.current = setTimeout(() => setIsAnimating(false), 400);
@@ -212,11 +235,12 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
         },
         error: (err) => {
           if (cancelled) return;
+          console.error("Real-time odds error:", err);
           setError(err instanceof Error ? err : new Error(String(err)));
           setIsLoading(false);
         },
         complete: () => {
-          // opzionale: potresti settare stato qui
+          // optional
         },
       }
     );
@@ -227,9 +251,9 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
         unsub?.();
       } catch {}
     };
-  }, [roundId, shouldSubscribe, onOddsChange]);
+  }, [roundId, shouldSubscribe]);
 
-  // odds memo è già stateful, ma manteniamo la signature invariata
+  // odds memo is already stateful, but we keep the signature unchanged
   const stableOdds = useMemo(() => odds, [odds]);
 
   return {
@@ -242,8 +266,8 @@ export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOdd
   };
 };
 
-// (opzionale) export delle query keys se ti servono fuori
+// (optional) Query keys for react-query or similar
 export const realTimeOddsQueryKeys = {
-  all: ['realTimeOdds'] as const,
-  round: (roundId: string) => ['realTimeOdds', roundId] as const,
+  all: ["realTimeOdds"] as const,
+  round: (roundId: string) => ["realTimeOdds", roundId] as const,
 };
