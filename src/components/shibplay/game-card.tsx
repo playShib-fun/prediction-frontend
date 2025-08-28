@@ -368,7 +368,7 @@ export default function GameCard({
     // local state for live progress only
 
     setProgressPct(progress);
-    setTimeLeftMs(timeLeftMs);
+    setTimeLeftMs(isNaN(timeLeftMs) ? 0 : timeLeftMs);
     setRound(roundId);
 
     if (timeLeftMs <= 0 && !isCalculatingRewards) {
