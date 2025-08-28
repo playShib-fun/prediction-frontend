@@ -1,7 +1,12 @@
 "use client";
 
 import { useWalletConnection } from "@/hooks/use-wallet";
-import { useBetBears, useBetBulls, useClaims, useRounds } from "@/hooks/use-prediction-data";
+import {
+  useBetBears,
+  useBetBulls,
+  useClaims,
+  useRounds,
+} from "@/hooks/use-prediction-data";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useEffect, useMemo, useState } from "react";
@@ -28,10 +33,9 @@ export default function History() {
   const { address } = useWalletConnection();
   // Enhanced filters and sort state
   const [allProcessedBets, setAllProcessedBets] = useState<BetRecord[]>([]);
-  const { filters, sort, filteredData } =
-    useHistoryFilters(allProcessedBets, {
-      validateOnChange: true,
-    });
+  const { filters, sort, filteredData } = useHistoryFilters(allProcessedBets, {
+    validateOnChange: true,
+  });
   // Debounce occurs in controls (300ms). Avoid double-debouncing here.
   const { searchResults } = useHistorySearch(filteredData, 0);
 
@@ -216,10 +220,17 @@ export default function History() {
     sort.direction,
   ]);
 
-  
-
-  if (isRoundsLoading || isClaimsLoading || isBearBetsLoading || isBullBetsLoading) {
-    return <Loading />;
+  if (
+    isRoundsLoading ||
+    isClaimsLoading ||
+    isBearBetsLoading ||
+    isBullBetsLoading
+  ) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loading />
+      </div>
+    );
   }
 
   if (!address) {
@@ -314,7 +325,10 @@ export default function History() {
                 "Loading more..."
               ) : hasMore ? (
                 loadError ? (
-                  <button onClick={() => retryLoad()} className="text-red-400 underline">
+                  <button
+                    onClick={() => retryLoad()}
+                    className="text-red-400 underline"
+                  >
                     Failed to load. Tap to retry.
                   </button>
                 ) : (
