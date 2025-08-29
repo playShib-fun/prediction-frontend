@@ -39,7 +39,7 @@ export default function PlacePredictionModal({
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const MIN_BET = 10;
+  const MIN_BET = 1;
 
   const { isConnected } = useWalletConnection();
 

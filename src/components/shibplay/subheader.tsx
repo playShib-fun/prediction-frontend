@@ -1,12 +1,13 @@
 "use client";
 
-import { Clock, TowerControl } from "lucide-react";
-import { useRoundTimerStore } from "@/stores";
+import { Clock, TowerControl, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRoundTimerStore,useCarouselNavStore } from "@/stores";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 
 export default function Subheader() {
   const { progressPct, timeLeftMs } = useRoundTimerStore();
+  const { isReady, scrollPrev, scrollNext } = useCarouselNavStore();
 
   const display = useMemo(() => {
     if (timeLeftMs <= 0) return "Calculating…";
@@ -26,6 +27,16 @@ export default function Subheader() {
       transition={{ duration: 0.15, ease: "easeInOut" }}
       className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-[92%] md:w-auto max-w-[720px]"
     >
+      <div className="flex items-center gap-2">
+        <button
+          aria-label="Previous round"
+          className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 transition cursor-pointer disabled:opacity-40"
+          onClick={() => scrollPrev()}
+          disabled={!isReady}
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </button>
+
       <div className="pointer-events-auto rounded-md border border-white/10 bg-black/40 backdrop-blur-md shadow-lg px-3 py-2 md:px-4 md:py-3 text-white/90">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -48,6 +59,16 @@ export default function Subheader() {
             </div>
           </div>
         </div>
+      </div>
+
+      <button
+          aria-label="Next round"
+          className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 transition cursor-pointer disabled:opacity-40"
+          onClick={() => scrollNext()}
+          disabled={!isReady}
+        >
+          <ChevronRight className="w-5 h-5 text-white" />
+        </button>
       </div>
     </motion.header>
   );
