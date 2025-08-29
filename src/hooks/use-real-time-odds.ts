@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { predictionApi } from "@/lib/graphql-queries";
-import { useMemo, useRef, useEffect, useState, useCallback } from "react";
+"use client";
 
-// Types for the hook
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { getWsClient } from "@/lib/gql-ws-client";
+
+// ===== Tipi che già esporti =====
 export interface OddsData {
   bullOdds: number;
   bearOdds: number;
@@ -37,47 +38,55 @@ export interface UseRealTimeOddsReturn {
   isVisible: boolean; // Current visibility state
 }
 
-// Odds calculation function
-const calculateOdds = (bearAmount: string, bullAmount: string): Omit<OddsData, 'lastUpdated'> => {
-  const bear = parseFloat(bearAmount || '0') / 1e18;
-  const bull = parseFloat(bullAmount || '0') / 1e18;
-  const total = bear + bull;
-  
-  if (total === 0) {
+// ===== Util =====
+const fromWei = (val?: string | number | bigint) => {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === "bigint") return Number(val) / 1e18; // wei -> BONE
+  if (typeof val === "number") return val / 1e18;
+  const s = String(val).trim();
+  if (s === "") return 0;
+  if (/^\d+$/.test(s)) return Number(BigInt(s)) / 1e18; // wei -> BONE
+  // fallback
+  return parseFloat(s) || 0;
+};
+
+const calculateOdds = (
+  bearAmount: string,
+  bullAmount: string,
+  pricePool?: string
+): Omit<OddsData, "lastUpdated"> => {
+  const bear = fromWei(bearAmount);
+  const bull = fromWei(bullAmount);
+  const total = pricePool != null ? fromWei(pricePool) : bear + bull;
+
+  if (total <= 0) {
     return { bullOdds: 1.0, bearOdds: 1.0, totalPool: 0 };
   }
-  
+
   const bullOdds = bull === 0 ? 1.0 : total / bull;
   const bearOdds = bear === 0 ? 1.0 : total / bear;
-  
+
   return { bullOdds, bearOdds, totalPool: total };
 };
 
-// Static odds calculation fallback using existing round data
-const calculateStaticOdds = (): OddsData => {
-  // This is a fallback that returns default odds when real-time polling fails
-  // In a real implementation, this could fetch from a cache or use existing round data
-  return {
-    bullOdds: 1.0,
-    bearOdds: 1.0,
-    totalPool: 0,
-    lastUpdated: Date.now(),
-  };
-};
+const calculateStaticOdds = (): OddsData => ({
+  bullOdds: 1.0,
+  bearOdds: 1.0,
+  totalPool: 0,
+  lastUpdated: Date.now(),
+});
 
 /**
- * Hook for visibility-based polling optimization using Intersection Observer
- * Detects when the component is visible in the viewport
+ * Visibility detection
  */
 export const useVisibilityOptimizedPolling = (
   options: UseVisibilityOptimizedPollingOptions
 ): UseVisibilityOptimizedPollingReturn => {
   const { enabled, threshold = 0.1 } = options;
-  const [isVisible, setIsVisible] = useState(true); // Default to visible for SSR
+  const [isVisible, setIsVisible] = useState(true); // default visible per SSR
   const elementRef = useRef<HTMLElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Cleanup function
   const cleanup = useCallback(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -86,155 +95,179 @@ export const useVisibilityOptimizedPolling = (
   }, []);
 
   useEffect(() => {
-    // If not enabled, always consider visible
     if (!enabled) {
       setIsVisible(true);
       return;
     }
-
-    // If no element to observe, consider visible
     if (!elementRef.current) {
       setIsVisible(true);
       return;
     }
-
-    // Check if IntersectionObserver is supported
-    if (typeof IntersectionObserver === 'undefined') {
-      // Fallback for browsers without IntersectionObserver support
+    if (typeof IntersectionObserver === "undefined") {
       setIsVisible(true);
       return;
     }
 
-    // Create intersection observer
     observerRef.current = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      {
-        threshold,
-        // Add some margin to start loading slightly before element is visible
-        rootMargin: '50px',
-      }
+      { threshold, rootMargin: "50px" }
     );
 
-    // Start observing
     observerRef.current.observe(elementRef.current);
-
-    // Cleanup on unmount or dependency change
     return cleanup;
   }, [enabled, threshold, cleanup]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+  useEffect(() => cleanup, [cleanup]);
 
-  return {
-    isVisible: enabled ? isVisible : true,
-    elementRef,
-  };
+  return { isVisible: enabled ? isVisible : true, elementRef };
 };
 
-// Query key factory
-const realTimeOddsQueryKeys = {
-  all: ["realTimeOdds"] as const,
-  round: (roundId: string) => [...realTimeOddsQueryKeys.all, roundId] as const,
-};
+// ===== Subscription (live query) per round =====
+const SUB_ROUND = /* GraphQL */ `
+  subscription ($id: BigInt!) {
+    rounds(where: { roundId_eq: $id }, limit: 1) {
+      roundId
+      bearAmount
+      bullAmount
+      pricePool
+      updateTimeStamp
+    }
+  }
+`;
 
 /**
- * Hook for real-time odds calculation with 15-second polling
- * Only polls when enabled (for upcoming rounds) and optionally when visible
+ * Hook realtime via WebSocket (graphql-ws)
  */
-export const useRealTimeOdds = (options: UseRealTimeOddsOptions): UseRealTimeOddsReturn => {
-  const { 
-    roundId, 
-    enabled, 
+export const useRealTimeOdds = (
+  options: UseRealTimeOddsOptions
+): UseRealTimeOddsReturn => {
+  const {
+    roundId,
+    enabled,
     onOddsChange,
     enableVisibilityOptimization = true,
-    visibilityThreshold = 0.1
+    visibilityThreshold = 0.1,
   } = options;
 
-  // Use visibility optimization hook
+  // vis-based “pause”
   const { isVisible, elementRef } = useVisibilityOptimizedPolling({
     enabled: enableVisibilityOptimization && enabled,
     threshold: visibilityThreshold,
   });
 
-  // Determine if polling should be active
-  const shouldPoll = enabled && (enableVisibilityOptimization ? isVisible : true);
+  const shouldSubscribe =
+    enabled && (enableVisibilityOptimization ? isVisible : true);
 
-  // Query for real-time round data with polling
-  const {
-    data: roundsData,
-    isLoading,
-    error,
-    isRefetching,
-  } = useQuery({
-    queryKey: realTimeOddsQueryKeys.round(roundId),
-    queryFn: predictionApi.getAllRounds,
-    select: (data) => {
-      // Find the specific round we're interested in
-      const targetRound = data.find(round => round.roundId === roundId);
-      return targetRound;
-    },
-    refetchInterval: shouldPoll ? 15000 : false, // 15-second polling when should poll
-    refetchIntervalInBackground: false,
-    staleTime: 10000, // Consider data stale after 10 seconds
-    enabled: shouldPoll && !!roundId,
-    retry: (failureCount) => {
-      // Retry up to 3 times with exponential backoff
-      if (failureCount >= 3) return false;
-      return true;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
+  const [odds, setOdds] = useState<OddsData>(calculateStaticOdds());
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Calculate odds from the round data
-  const odds = useMemo((): OddsData => {
-    if (!roundsData) {
-      // Fallback to static calculation when no data is available
-      return calculateStaticOdds();
+  const previousOddsRef = useRef<OddsData>(odds);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // cleanup anim
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+    };
+  }, []);
+
+  // Attach/detach the subscription for the round
+  useEffect(() => {
+    if (!roundId || !shouldSubscribe) {
+      setIsLoading(false);
+      return;
     }
 
-    const calculatedOdds = calculateOdds(
-      roundsData.bearAmount || '0',
-      roundsData.bullAmount || '0'
+    const client = getWsClient();
+    if (!client) {
+      setError(
+        new Error("WebSocket client unavailable (SSR or WS not supported).")
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    let unsub: (() => void) | null = null;
+    let cancelled = false;
+
+    unsub = client.subscribe(
+      { query: SUB_ROUND, variables: { id: roundId } },
+      {
+        next: (ev: any) => {
+          if (cancelled) return;
+          const row = ev?.data?.rounds?.[0];
+          console.log("RT raw:", row);
+          console.log("RT parsed total:", fromWei(row?.pricePool));
+
+          if (!row) return;
+
+          const computed = calculateOdds(
+            row.bearAmount ?? "0",
+            row.bullAmount ?? "0",
+            row.pricePool ?? undefined
+          );
+
+          const nextOdds: OddsData = { ...computed, lastUpdated: Date.now() };
+
+          setIsAnimating(true);
+          if (animTimerRef.current) clearTimeout(animTimerRef.current);
+          animTimerRef.current = setTimeout(() => setIsAnimating(false), 400);
+
+          setOdds(nextOdds);
+          setIsLoading(false);
+
+          const prev = previousOddsRef.current;
+          const changed =
+            prev.bullOdds !== nextOdds.bullOdds ||
+            prev.bearOdds !== nextOdds.bearOdds ||
+            prev.totalPool !== nextOdds.totalPool;
+
+          if (onOddsChange && changed) {
+            onOddsChange(nextOdds, prev);
+          }
+          previousOddsRef.current = nextOdds;
+        },
+        error: (err) => {
+          if (cancelled) return;
+          console.error("Real-time odds error:", err);
+          setError(err instanceof Error ? err : new Error(String(err)));
+          setIsLoading(false);
+        },
+        complete: () => {
+          // optional
+        },
+      }
     );
 
-    return {
-      ...calculatedOdds,
-      lastUpdated: Date.now(),
+    return () => {
+      cancelled = true;
+      try {
+        unsub?.();
+      } catch {}
     };
-  }, [roundsData, roundId]);
+  }, [roundId, shouldSubscribe]);
 
-  // Track previous odds for change detection
-  const previousOddsRef = useRef<OddsData>(odds);
-  
-  // Call onChange callback when odds change
-  useEffect(() => {
-    const previousOdds = previousOddsRef.current;
-    const hasChanged = 
-      previousOdds.bullOdds !== odds.bullOdds ||
-      previousOdds.bearOdds !== odds.bearOdds ||
-      previousOdds.totalPool !== odds.totalPool;
-
-    if (onOddsChange && hasChanged) {
-      onOddsChange(odds, previousOdds);
-    }
-
-    // Update the ref with current odds
-    previousOddsRef.current = odds;
-  }, [odds, onOddsChange]);
+  // odds memo is already stateful, but we keep the signature unchanged
+  const stableOdds = useMemo(() => odds, [odds]);
 
   return {
-    odds,
-    isLoading: isLoading && shouldPoll,
-    error: error as Error | null,
-    isAnimating: isRefetching && shouldPoll,
+    odds: stableOdds,
+    isLoading,
+    error,
+    isAnimating,
     elementRef,
     isVisible,
   };
 };
 
-// Export query keys for external use
-export { realTimeOddsQueryKeys };
+// (optional) Query keys for react-query or similar
+export const realTimeOddsQueryKeys = {
+  all: ["realTimeOdds"] as const,
+  round: (roundId: string) => ["realTimeOdds", roundId] as const,
+};

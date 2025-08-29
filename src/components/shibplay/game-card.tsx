@@ -166,10 +166,13 @@ export default function GameCard({
   }, [state, roundId]);
 
   const totalPoolBone = useMemo(() => {
+    if (state === "upcoming") {
+      return realTimeOdds.totalPool;
+    }
     const bear = round?.bearAmount ? parseFloat(round.bearAmount) / 1e18 : 0;
     const bull = round?.bullAmount ? parseFloat(round.bullAmount) / 1e18 : 0;
     return bear + bull;
-  }, [round]);
+  }, [state, realTimeOdds, round]);
 
   // Calculate price difference for ended rounds using values directly from round
   const priceDifference = useMemo(() => {
@@ -365,7 +368,7 @@ export default function GameCard({
     // local state for live progress only
 
     setProgressPct(progress);
-    setTimeLeftMs(timeLeftMs);
+    setTimeLeftMs(isNaN(timeLeftMs) ? 0 : timeLeftMs);
     setRound(roundId);
 
     if (timeLeftMs <= 0 && !isCalculatingRewards) {
@@ -514,7 +517,7 @@ export default function GameCard({
         </div>
         */}
         {state === "live" && isCalculatingRewards && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/90 backdrop-blur-sm">
             <BoneLoadingState
               text="Calculating rewards..."
               size="lg"
@@ -672,7 +675,7 @@ export default function GameCard({
               initialDirection="higher"
             >
               <NeumorphButton
-                disabled={betPlaced || timeLeftMs <= 10_000}
+                disabled={betPlaced || timeLeftMs <= 30_000}
                 loading={isLoading}
                 size={"medium"}
                 className="flex-1 rounded-xs bg-green-500 hover:bg-green-700 transition-all ease-in-out duration-150 text-green-900 hover:text-white cursor-pointer text-lg disabled:opacity-50 disabled:cursor-not-allowed"
@@ -696,7 +699,7 @@ export default function GameCard({
               <NeumorphButton
                 loading={isLoading}
                 size={"medium"}
-                disabled={betPlaced || timeLeftMs <= 10_000}
+                disabled={betPlaced || timeLeftMs <= 30_000}
                 className="flex-1 text-lg rounded-xs bg-red-500 hover:bg-red-700 transition-all ease-in-out duration-150 text-white font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {!isLoading && <ChevronsDown className="w-8 h-8" />}
